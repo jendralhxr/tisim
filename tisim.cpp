@@ -2,6 +2,8 @@
    compile against OpenCV
      $	g++ tisim.cpp -o tisim `pkg-config opencv --libs` 
      $	./tisim /dev/video0
+
+adapted from https://gist.github.com/Circuitsoft/1126411
 */
 
 #include <errno.h>
