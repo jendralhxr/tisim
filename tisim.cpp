@@ -1,7 +1,7 @@
 /* sample code for ImagingSource camera 
    compile against OpenCV
      $	g++ tisim.cpp -o tisim `pkg-config opencv --libs` 
-     $	./tisim /dev/video0
+     $	./tisim /dev/video1
 
 adapted from https://gist.github.com/Circuitsoft/1126411
 */
