@@ -1,0 +1,106 @@
+Driver Info:
+	Driver name   : uvcvideo
+	Card type     : DFM 37UX287-ML
+	Bus info      : usb-0000:00:14.0-1
+	Driver version: 4.15.18
+	Capabilities  : 0x84200001
+		Video Capture
+		Streaming
+		Extended Pix Format
+		Device Capabilities
+	Device Caps   : 0x04200001
+		Video Capture
+		Streaming
+		Extended Pix Format
+Priority: 2
+Video input : 0 (Camera 1: ok)
+Format Video Capture:
+	Width/Height      : 640/480
+	Pixel Format      : 'RGGB'
+	Field             : None
+	Bytes per Line    : 640
+	Size Image        : 307200
+	Colorspace        : Default
+	Transfer Function : Default
+	YCbCr Encoding    : Default
+	Quantization      : Default
+	Flags             : 
+Streaming Parameters Video Capture:
+	Capabilities     : timeperframe
+	Frames per second: 601.000 (601/1)
+	Read buffers     : 0
+	
+	brightness (int)    : min=0 max=4095 step=1 default=240 value=207
+   white_balance_component_auto (bool)   : default=1 value=1
+    white_balance_red_component (int)    : min=0 max=255 step=1 default=64 value=64 flags=inactive
+   white_balance_blue_component (int)    : min=0 max=255 step=1 default=64 value=64 flags=inactive
+                           gain (int)    : min=0 max=480 step=1 default=0 value=0
+                  exposure_auto (menu)   : min=0 max=3 default=3 value=1
+				1: Manual Mode
+				3: Aperture Priority Mode
+              exposure_absolute (int)    : min=1 max=300000 step=1 default=3 value=100
+               exposure_time_us (int)    : min=1 max=30000000 step=1 default=333 value=333
+                   auto_shutter (bool)   : default=1 value=1
+        auto_exposure_reference (int)    : min=0 max=255 step=1 default=128 value=128
+                      gain_auto (bool)   : default=1 value=1
+                   trigger_mode (bool)   : default=0 value=0
+               software_trigger (button) : flags=write-only
+                  trigger_delay (int)    : min=0 max=100000 step=1 default=0 value=31
+                  strobe_enable (bool)   : default=0 value=0
+                strobe_polarity (bool)   : default=0 value=0
+                strobe_exposure (bool)   : default=0 value=0
+                strobe_duration (int)    : min=0 max=32767 step=1 default=100 value=100
+                   strobe_delay (int)    : min=0 max=32767 step=1 default=0 value=0
+                          gpout (bool)   : default=0 value=0
+                           gpin (bool)   : default=0 value=0
+                   roi_offset_x (int)    : min=0 max=464 step=2 default=0 value=0
+                   roi_offset_y (int)    : min=0 max=536 step=2 default=0 value=0
+                roi_auto_center (bool)   : default=1 value=1
+               trigger_polarity (menu)   : min=0 max=1 default=0 value=0
+				0: Rising Edge
+				1: Falling Edge
+         trigger_expposure_mode (menu)   : min=0 max=1 default=0 value=0
+				0: Frame Start
+				1: Exposure Active
+     auto_functions_roi_control (bool)   : default=1 value=1
+             white_balance_mode (menu)   : min=0 max=1 default=0 value=0
+				0: Gray World
+				1: Temperature
+      white_balance_auto_preset (menu)   : min=0 max=4 default=0 value=0
+				0: Any
+				1: Warm White
+				2: Cool White
+				3: Daylight
+				4: Deep Shade
+  white_balance_green_component (int)    : min=0 max=255 step=1 default=64 value=64
+      white_balance_temp_preset (menu)   : min=0 max=8 default=6500 value=4
+				0: Sodium Vapor Lamp
+				1: Warm Light
+				2: Halogen Light
+				3: Neutral White
+				4: Cool White Fluorescent Light
+				5: Cool White/Daylight (CFL)
+				6: Daylight
+				7: Cool White LED
+				8: Blue Sky
+      white_balance_temperature (int)    : min=2500 max=10000 step=100 default=6500 value=4000
+                flip_horizontal (bool)   : default=0 value=0
+                  flip_vertical (bool)   : default=0 value=0
+            highlight_reduction (bool)   : default=0 value=0
+ exposure_auto_upper_limit_auto (bool)   : default=1 value=1
+   exposure_auto_lower_limit_us (int)    : min=1 max=1000000 step=1 default=333 value=1
+   exposure_auto_upper_limit_us (int)    : min=1 max=1000000 step=1 default=333 value=33333
+         override_scanning_mode (int)    : min=1 max=16 step=1 default=1 value=0
+      auto_functions_roi_preset (menu)   : min=0 max=5 default=2 value=2
+				0: Full Sensor
+				1: Custom Rectangle
+				2: Center 50%
+				3: Center 25%
+				4: Bottom Half
+				5: Top Half
+          gain_auto_lower_limit (int)    : min=0 max=480 step=1 default=0 value=0
+          gain_auto_upper_limit (int)    : min=0 max=480 step=1 default=480 value=480
+   trigger_global_reset_release (bool)   : default=0 value=0
+   
+   
+ 
