@@ -24,10 +24,9 @@ adapted from https://gist.github.com/Circuitsoft/1126411
 #define FRAME_SIZE 307200 // 640x480
 
 #define GAIN 10 // not really doing anything
-#define FPS 200
-#define EXPOSURE 200 // 1/100 s
+#define FPS 600 // maximum fps
+#define EXPOSURE 2000 // us
 #define BRIGHTNESS 200
-	
 
 using namespace cv;
 
@@ -148,12 +147,16 @@ int init_mmap(int fd){
 
 int set_props(char *device){
 	sprintf(command, "v4l2-ctl -d %s -c exposure_auto=1", device);
+	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c exposure_time_us=%d", device, EXPOSURE);
+	system(command);
 	//sprintf(command, "v4l2-ctl -d %s -c exposure_absolute=%d", device, EXPOSURE);
+	//system(command);
 	sprintf(command, "v4l2-ctl -d %s -c gain_auto=0", device);
+	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c gain=%d", device, GAIN);
+	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c brightness=%d", device, BRIGHTNESS);
-	
 	system(command);
 	
 	} 
@@ -188,8 +191,8 @@ int capture_image(int fd){
         return 1;
     }
     
-    memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
-    cvtColor(raw, image, CV_BayerBG2BGR);
+    //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+    //cvtColor(raw, image, CV_BayerBG2BGR);
     
     //namedWindow( "Display window", WINDOW_AUTOSIZE );  // Create a window for display.
     //imshow( "Display window", image );                   // Show our image inside it.
@@ -222,6 +225,7 @@ int main(int argc, char **argv){
 		return 1;
 		}  
 	
+	set_props(argv[1]);
 
 	gettimeofday(&start,NULL);
 	while(1){
