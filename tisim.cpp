@@ -95,7 +95,8 @@ int print_caps(int fd){
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmt.fmt.pix.width = 640;
 	fmt.fmt.pix.height = 480;
-	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8;
+	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8; // color
+	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_GREY; // greyscale
 	fmt.fmt.pix.field = V4L2_FIELD_NONE;
 	
 	if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt)){
@@ -191,12 +192,17 @@ int capture_image(int fd){
         return 1;
     }
     
-    memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+    //color
+    //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
     //cvtColor(raw, image, CV_BayerBG2BGR);
-    
-    //namedWindow( "Display window", WINDOW_AUTOSIZE );  // Create a window for display.
     //imshow( "Display window", image );                   // Show our image inside it.
-	//waitKey(1);                                          // Wait for a keystroke in the window
+	
+    // grey
+    memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+    imshow( "Display window", raw );                   
+	
+    //color
+    waitKey(1);                                          // Wait for a keystroke in the window
     
     //char filename[20];
     //sprintf(filename, "image%d.jpg",i);
@@ -244,3 +250,4 @@ int main(int argc, char **argv){
 	close(fd);
 	return 0;
 }
+ 
