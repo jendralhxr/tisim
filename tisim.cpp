@@ -191,7 +191,7 @@ int capture_image(int fd){
         return 1;
     }
     
-    //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+    memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
     //cvtColor(raw, image, CV_BayerBG2BGR);
     
     //namedWindow( "Display window", WINDOW_AUTOSIZE );  // Create a window for display.
