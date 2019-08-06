@@ -35,8 +35,10 @@ uint8_t *buffer;
 fd_set fds;
 int fd; // camera file descriptor
 
+Mat raw16 = Mat(480, 640, CV_16UC1);
 Mat raw = Mat(480, 640, CV_8UC1);
 Mat image= Mat(480, 640, CV_8UC3);
+Mat image16= Mat(480, 640, CV_16UC3);
 
 struct v4l2_buffer buf;
 struct timeval timeout;
@@ -96,8 +98,11 @@ int print_caps(int fd){
 	fmt.fmt.pix.width = 640;
 	fmt.fmt.pix.height = 480;
 	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8; // color
-	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_GREY; // greyscale
+	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB10; // tegra
+	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_GREY; // greyscale
+
 	fmt.fmt.pix.field = V4L2_FIELD_NONE;
+
 	
 	if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt)){
 		perror("Setting Pixel Format");
@@ -159,8 +164,8 @@ int set_props(char *device){
 	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c brightness=%d", device, BRIGHTNESS);
 	system(command);
-	
-	} 
+	}
+	 
 int capture_image(int fd){
     if(-1 == xioctl(fd, VIDIOC_QBUF, &buf))
     {
@@ -192,16 +197,25 @@ int capture_image(int fd){
         return 1;
     }
     
+    //tegra camera
+    memmove(raw16.data, buffer, sizeof(char)*FRAME_SIZE*2);
+    raw = raw16.clone();
+    raw.convertTo(raw, CV_8UC1, 0.0625);
+    cvtColor(raw, image, CV_BayerBG2BGR);
+    imshow( "Display window", image );                   // Show our image inside it.
+	    
     //color
     //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
     //cvtColor(raw, image, CV_BayerBG2BGR);
     //imshow( "Display window", image );                   // Show our image inside it.
 	
     // grey
-    memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
-    imshow( "Display window", raw );                   
+    //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+    //imshow( "Display window", raw );                   
 	
-    //color
+		
+	
+	
     waitKey(1);                                          // Wait for a keystroke in the window
     
     //char filename[20];
@@ -209,8 +223,7 @@ int capture_image(int fd){
     //imwrite(filename, image);
     return 0;
 }
- 
-        
+     
 int main(int argc, char **argv){
 
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
