@@ -4,7 +4,7 @@
  *   
  *  compile against OpenCV
  *   $	g++ tisim-recv.cpp -o tisim-recv `pkg-config opencv --libs` 
- *   $	./tisim-recv <port>
+ *   $	./tisim-recv <port> <image-feed-file>
  * 
  * adapted from:
  * https://gist.github.com/Circuitsoft/1126411
@@ -12,9 +12,9 @@
  */
 
 #include "PracticalSocket.h" // For UDPSocket and SocketException
-#include <iostream>          // For cout and cerr
-#include <cstdlib>           // For atoi()
+#include <stdlib.h>           // For atoi()
 #include <sys/time.h>
+#include <unistd.h>
 #include "opencv2/opencv.hpp"
 #include "config.h"
 
@@ -29,11 +29,6 @@ struct header{
 	} img_header;
 
 int main(int argc, char * argv[]) {
-
-    if (argc != 2) { // Test for correct number of parameters
-        cerr << "Usage: " << argv[0] << " <Server Port>" << endl;
-        exit(1);
-    }
 
     unsigned short servPort = atoi(argv[1]); // First arg:  local port
 
@@ -69,8 +64,6 @@ int main(int argc, char * argv[]) {
                 }
                 memcpy( & longbuf[i * PACK_SIZE], buffer, PACK_SIZE);
             }
-
-//            cout << "Received packet from " << sourceAddress << ":" << sourcePort << endl;
  
             Mat rawData = Mat(1, PACK_SIZE * total_pack, CV_8UC1, longbuf);
             Mat frame = imdecode(rawData, CV_LOAD_IMAGE_COLOR);
@@ -82,6 +75,7 @@ int main(int argc, char * argv[]) {
             frames_count++;
 			gettimeofday(&stop,NULL);
 		
+		
 			// update fps counter every second
 			if ((1e6*(stop.tv_sec-start.tv_sec) +stop.tv_usec -start.tv_usec) > 1e6){
 				printf("recv fps: %d\n", frames_count);
@@ -89,10 +83,16 @@ int main(int argc, char * argv[]) {
 				frames_count= 0;
 				}
             
-            imshow("recv", frame);
-            free(longbuf);
-            waitKey(1);
+			// display image to screen
+            //imshow("recv", frame);
+            // waitKey(1);
 
+            // save image to frame
+            imwrite(argv[2], frame);
+            usleep(50000);
+            
+            free(longbuf);
+            
 
         }
     } catch (SocketException & e) {

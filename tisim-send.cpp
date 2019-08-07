@@ -273,8 +273,6 @@ int main(int argc, char **argv){
     compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     compression_params.push_back(ENCODE_QUALITY);
 
-	//namedWindow("send", CV_WINDOW_AUTOSIZE);
-
 	try{
 	servAddress = argv[2]; // First arg: server address
     servPort = Socket::resolveService(argv[3], "udp");
