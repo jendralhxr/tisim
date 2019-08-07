@@ -228,7 +228,7 @@ int capture_image(int fd){
     //color
     memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
     cvtColor(raw, image, CV_BayerBG2BGR);
-    imshow( "Display window", image );                   // Show our image inside it.
+    //imshow( "Display window", image );                   // Show our image inside it.
 	
     // grey
     //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
@@ -240,7 +240,7 @@ int capture_image(int fd){
     int ibuf[1];
     ibuf[0] = total_pack;
     sock.sendTo(ibuf, sizeof(int), servAddress, 8080);
-    //for (int i = 0; i < total_pack; i++) sock.sendTo( & encoded[i * PACK_SIZE], PACK_SIZE, servAddress, servPort);
+    for (int i = 0; i < total_pack; i++) sock.sendTo( & encoded[i * PACK_SIZE], PACK_SIZE, servAddress, servPort);
 
     waitKey(1);
 //    waitKey(FRAME_INTERVAL);
@@ -276,7 +276,7 @@ int main(int argc, char **argv){
     compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     compression_params.push_back(ENCODE_QUALITY);
 
-	namedWindow("send", CV_WINDOW_AUTOSIZE);
+	//namedWindow("send", CV_WINDOW_AUTOSIZE);
 
 	try{
 	servAddress = argv[2]; // First arg: server address

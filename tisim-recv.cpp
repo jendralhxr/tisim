@@ -4,7 +4,7 @@
  *   
  *  compile against OpenCV
  *   $	g++ tisim-recv.cpp -o tisim-recv `pkg-config opencv --libs` 
- *   $	./tisim-recv <camera-device> <port>
+ *   $	./tisim-recv <port>
  * 
  * adapted from:
  * https://gist.github.com/Circuitsoft/1126411
