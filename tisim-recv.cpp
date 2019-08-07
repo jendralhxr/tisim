@@ -21,6 +21,12 @@
 using namespace cv;
 unsigned int frames_count;
 struct timeval start, stop, timestamp;
+int total_pack;
+
+struct header{
+	int pack_num;
+	char info[INFO_LEN];
+	} img_header;
 
 int main(int argc, char * argv[]) {
 
@@ -48,10 +54,15 @@ int main(int argc, char * argv[]) {
             // Block until receive message from a client
             do {
                 recvMsgSize = sock.recvFrom(buffer, BUF_LEN, sourceAddress, sourcePort);
-            } while (recvMsgSize > sizeof(int));
-            int total_pack = ((int * ) buffer)[0];
+            } while (recvMsgSize > sizeof(struct header));
+            
+            memcpy(&img_header, buffer, sizeof(struct header));
+            total_pack = img_header.pack_num;
+			printf("%s",img_header.info);
+			
+//            total_pack = ((int * ) buffer)[0];
 
-  //          cout << "expecting length of packs:" << total_pack << endl;
+            cout << "expecting length of packs:" << total_pack << endl;
             char * longbuf = new char[PACK_SIZE * total_pack];
             for (int i = 0; i < total_pack; i++) {
                 recvMsgSize = sock.recvFrom(buffer, BUF_LEN, sourceAddress, sourcePort);

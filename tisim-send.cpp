@@ -47,6 +47,11 @@ struct timeval timeout;
 struct timeval start, stop, timestamp;
 unsigned int frames_count;
 
+struct header{
+	int pack_num;
+	char info[INFO_LEN];
+	} img_header;
+
 string servAddress;
 unsigned short servPort;
 UDPSocket sock;
@@ -225,7 +230,16 @@ int capture_image(int fd){
 	int total_pack = 1 + (encoded.size() - 1) / PACK_SIZE;
     int ibuf[1];
     ibuf[0] = total_pack;
-    sock.sendTo(ibuf, sizeof(int), servAddress, 8080);
+    
+    gettimeofday(&timestamp, NULL);
+    
+    img_header.pack_num= total_pack;
+    sprintf(img_header.info, "timestamp %ld %ld\n",timestamp.tv_sec, timestamp.tv_usec);
+    //printf("%s",img_header.info);
+    
+    sock.sendTo(&img_header, sizeof(struct header), servAddress, 8080);
+    
+    //sock.sendTo(ibuf, sizeof(int), servAddress, 8080);
     for (int i = 0; i < total_pack; i++) sock.sendTo( & encoded[i * PACK_SIZE], PACK_SIZE, servAddress, servPort);
 
     waitKey(1);
