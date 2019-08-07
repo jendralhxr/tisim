@@ -20,28 +20,14 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
 #include "PracticalSocket.h"      // For UDPSocket and SocketException
-
-// image properties
-#define FRAME_HEIGHT 480
-#define FRAME_WIDTH 640
-#define FRAME_SIZE 307200 // 640x480
-
-// camera setup
-#define GAIN 10 // not really doing anything
-#define FPS 600 // maximum fps
-#define EXPOSURE 2000 // us
-#define BRIGHTNESS 200
-
-// UDP parameters
-#define FRAME_INTERVAL (1000/30)
-#define PACK_SIZE 4096 //udp pack size; note that OSX limits < 8100 bytes
-#define ENCODE_QUALITY 80
+#include "config.h"
 
 using namespace std;
 using namespace cv;
@@ -58,7 +44,7 @@ Mat image= Mat(480, 640, CV_8UC3);
 
 struct v4l2_buffer buf;
 struct timeval timeout;
-struct timeval start, stop, *timestamp;
+struct timeval start, stop, timestamp;
 unsigned int frames_count;
 
 string servAddress;
@@ -292,7 +278,7 @@ int main(int argc, char **argv){
 		
 		// update fps counter every second
 		if ((1e6*(stop.tv_sec-start.tv_sec) +stop.tv_usec -start.tv_usec) > 1e6){
-			printf("fps: %d\n", frames_count);
+			printf("send fps: %d\n", frames_count);
 			gettimeofday(&start,NULL);
 			frames_count= 0;
 			}
