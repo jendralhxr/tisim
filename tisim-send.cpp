@@ -11,7 +11,6 @@
  * https://github.com/chenxiaoqino/udp-image-streaming/
  */
 
-
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/videodev2.h>
@@ -27,10 +26,6 @@
 #include <opencv2/opencv.hpp>
 
 #include "PracticalSocket.h"      // For UDPSocket and SocketException
-#include <iostream>               // For cout and cerr
-
-
-
 
 // image properties
 #define FRAME_HEIGHT 480
@@ -173,8 +168,7 @@ int init_mmap(int fd){
  
     buffer = (unsigned char*) mmap (NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
     printf("Length: %d\nAddress: %p\n", buf.length, buffer);
-    printf("Image Length: %d\n", buf.bytesused);
- 
+    
     return 0;
 }
 
@@ -245,8 +239,8 @@ int capture_image(int fd){
 	int total_pack = 1 + (encoded.size() - 1) / PACK_SIZE;
     int ibuf[1];
     ibuf[0] = total_pack;
-    sock.sendTo(ibuf, sizeof(int), servAddress, servPort);
-    for (int i = 0; i < total_pack; i++) sock.sendTo( & encoded[i * PACK_SIZE], PACK_SIZE, servAddress, servPort);
+    sock.sendTo(ibuf, sizeof(int), servAddress, 8080);
+    //for (int i = 0; i < total_pack; i++) sock.sendTo( & encoded[i * PACK_SIZE], PACK_SIZE, servAddress, servPort);
 
     waitKey(1);
 //    waitKey(FRAME_INTERVAL);
@@ -278,14 +272,17 @@ int main(int argc, char **argv){
 		}  
 	
 	set_props(argv[1]);
-
-	servAddress = argv[2]; // First arg: server address
-    short servPort = Socket::resolveService(argv[3], "udp");
-	 
+     
     compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     compression_params.push_back(ENCODE_QUALITY);
 
 	namedWindow("send", CV_WINDOW_AUTOSIZE);
+
+	try{
+	servAddress = argv[2]; // First arg: server address
+    servPort = Socket::resolveService(argv[3], "udp");
+	printf("sending to %s:%d\n", servAddress.c_str(), servPort);
+
         
 	gettimeofday(&start,NULL);
 	while(1){
@@ -300,7 +297,12 @@ int main(int argc, char **argv){
 			frames_count= 0;
 			}
 		}
-	
+	}
+	catch (SocketException & e) {
+        cerr << e.what() << endl;
+        exit(1);
+    }
+		
 	close(fd);
 	return 0;
 

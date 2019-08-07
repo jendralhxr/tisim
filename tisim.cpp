@@ -198,22 +198,20 @@ int capture_image(int fd){
     }
     
     //tegra camera
-    memmove(raw16.data, buffer, sizeof(char)*FRAME_SIZE*2);
-    raw = raw16.clone();
-    raw.convertTo(raw, CV_8UC1, 0.0625);
-    cvtColor(raw, image, CV_BayerBG2BGR);
-    imshow( "Display window", image );                   // Show our image inside it.
-	    
-    //color
-    //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+    //memmove(raw16.data, buffer, sizeof(char)*FRAME_SIZE*2);
+    //raw = raw16.clone();
+    //raw.convertTo(raw, CV_8UC1, 0.0625);
     //cvtColor(raw, image, CV_BayerBG2BGR);
     //imshow( "Display window", image );                   // Show our image inside it.
+	    
+    //color
+    memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+    cvtColor(raw, image, CV_BayerBG2BGR);
+    imshow( "Display window", image );                   // Show our image inside it.
 	
     // grey
     //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
     //imshow( "Display window", raw );                   
-	
-		
 	
 	
     waitKey(1);                                          // Wait for a keystroke in the window
