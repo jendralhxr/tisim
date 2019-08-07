@@ -60,9 +60,6 @@ int main(int argc, char * argv[]) {
             total_pack = img_header.pack_num;
 			printf("%s",img_header.info);
 			
-//            total_pack = ((int * ) buffer)[0];
-
-            cout << "expecting length of packs:" << total_pack << endl;
             char * longbuf = new char[PACK_SIZE * total_pack];
             for (int i = 0; i < total_pack; i++) {
                 recvMsgSize = sock.recvFrom(buffer, BUF_LEN, sourceAddress, sourcePort);

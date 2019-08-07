@@ -235,11 +235,8 @@ int capture_image(int fd){
     
     img_header.pack_num= total_pack;
     sprintf(img_header.info, "timestamp %ld %ld\n",timestamp.tv_sec, timestamp.tv_usec);
-    //printf("%s",img_header.info);
     
     sock.sendTo(&img_header, sizeof(struct header), servAddress, 8080);
-    
-    //sock.sendTo(ibuf, sizeof(int), servAddress, 8080);
     for (int i = 0; i < total_pack; i++) sock.sendTo( & encoded[i * PACK_SIZE], PACK_SIZE, servAddress, servPort);
 
     waitKey(1);
