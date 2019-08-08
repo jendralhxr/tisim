@@ -47,10 +47,8 @@ struct timeval timeout;
 struct timeval start, stop, timestamp;
 unsigned int frames_count;
 
-struct header{
-	int pack_num;
-	char info[INFO_LEN];
-	} img_header;
+long int ibuf[3]; // header
+int total_pack;
 
 string servAddress;
 unsigned short servPort;
@@ -227,24 +225,17 @@ int capture_image(int fd){
 	
 	// here goes transmitting routine
 	imencode(".jpg", image, encoded, compression_params);
-	int total_pack = 1 + (encoded.size() - 1) / PACK_SIZE;
-    int ibuf[1];
+	total_pack = 1 + (encoded.size() - 1) / PACK_SIZE;
     ibuf[0] = total_pack;
-    
     gettimeofday(&timestamp, NULL);
-    
-    img_header.pack_num= total_pack;
-    sprintf(img_header.info, "timestamp %ld %ld\n",timestamp.tv_sec, timestamp.tv_usec);
-    
-    //sock.sendTo(&img_header, sizeof(struct header), servAddress, 8080);
-    //printf("sending header %ld\n",sizeof(struct header));
-    
-    sock.sendTo(ibuf, sizeof(int), servAddress, servPort);
-    printf("sending header %ld\n",sizeof(int));
+    ibuf[1] = timestamp.tv_sec;
+    ibuf[2] = timestamp.tv_usec;
+    sock.sendTo(ibuf, sizeof(long int) *3, servAddress, servPort);
+    //~ printf("sending header %ld\n",sizeof(long int) *3);
         
     for (int i = 0; i < total_pack; i++) {
 		sock.sendTo( & encoded[i * PACK_SIZE], PACK_SIZE, servAddress, servPort);
-		printf("sending content %d/%d size:%d\n", i+1, total_pack, PACK_SIZE);
+		//~ printf("sending content %d/%d size:%d\n", i+1, total_pack, PACK_SIZE);
     }
 	
 //    waitKey(1);
@@ -308,6 +299,4 @@ int main(int argc, char **argv){
 		
 	close(fd);
 	return 0;
-
-
 }

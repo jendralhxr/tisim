@@ -21,12 +21,9 @@
 using namespace cv;
 unsigned int frames_count;
 struct timeval start, stop, timestamp;
-int total_pack;
+long int total_pack;
 
-struct header{
-	int pack_num;
-	char info[INFO_LEN];
-	} img_header;
+#define UPDATE_RENDER 6
 
 int main(int argc, char * argv[]) {
 
@@ -45,27 +42,19 @@ int main(int argc, char * argv[]) {
         while (1) {
             // Block until receive message from a client
             int wait;
-           
-            //do {
-                //recvMsgSize = sock.recvFrom(buffer, BUF_LEN, sourceAddress, sourcePort);
-				//printf("wait %d %d/%d\n",wait++, recvMsgSize, sizeof(struct header));
-            //} while (recvMsgSize != sizeof(struct header));
-           	do {
-                recvMsgSize = sock.recvFrom(buffer, BUF_LEN, sourceAddress, sourcePort);
-            } while (recvMsgSize > sizeof(int));
-            total_pack = ((int * ) buffer)[0];
-           	
-           	wait=0;
-           	printf("received header\n");
-            
-           	
-           	//memcpy(&img_header, buffer, sizeof(struct header));
-            //total_pack = img_header.pack_num;
-			//printf("expecting %d packs, %s",img_header.pack_num, img_header.info);
 			
-            char * longbuf = new char[PACK_SIZE * total_pack];
+           	do recvMsgSize = sock.recvFrom(buffer, BUF_LEN, sourceAddress, sourcePort);
+            while (recvMsgSize != sizeof(long int) * 3);
+            
+            total_pack = ((int * ) buffer)[0];
+           	wait=0;
+           	//~ printf("received header %d\n",recvMsgSize);
+           	
+           	startimage:
+           	char * longbuf = new char[PACK_SIZE * total_pack];
             for (int i = 0; i < total_pack; i++) {
                 recvMsgSize = sock.recvFrom(buffer, BUF_LEN, sourceAddress, sourcePort);
+                if (recvMsgSize == sizeof(long int) * 3) goto startimage;
                 if (recvMsgSize != PACK_SIZE) {
                     cerr << "Received unexpected size pack:" << recvMsgSize << endl;
                     continue;
@@ -91,21 +80,20 @@ int main(int argc, char * argv[]) {
 				}
             
 			// display image to screen
-            imshow("recv", frame);
+			imshow("recv", frame);
+            if (frames_count%UPDATE_RENDER == 0){ // updated every 1/UPDATE_RENDER of FPS
+				imwrite(argv[2], frame);
+            	}
+            	
             waitKey(1);
-
-            // save image to frame
-            //imwrite(argv[2], frame);
-            //usleep(50000);
-            
-            free(longbuf);
-            
-
-        }
-    } catch (SocketException & e) {
-        cerr << e.what() << endl;
-        exit(1);
-    }
+			free(longbuf);
+			}
+		}
+		
+	catch (SocketException & e) {
+    cerr << e.what() << endl;
+    exit(1);
+		}
 
     return 0;
-}
+	}
