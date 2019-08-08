@@ -41,19 +41,27 @@ int main(int argc, char * argv[]) {
         string sourceAddress; // Address of datagram source
         unsigned short sourcePort; // Port of datagram source
 
-        clock_t last_cycle = clock();
-
-
 		gettimeofday(&start,NULL);
         while (1) {
             // Block until receive message from a client
-            do {
+            int wait;
+           
+            //do {
+                //recvMsgSize = sock.recvFrom(buffer, BUF_LEN, sourceAddress, sourcePort);
+				//printf("wait %d %d/%d\n",wait++, recvMsgSize, sizeof(struct header));
+            //} while (recvMsgSize != sizeof(struct header));
+           	do {
                 recvMsgSize = sock.recvFrom(buffer, BUF_LEN, sourceAddress, sourcePort);
-            } while (recvMsgSize > sizeof(struct header));
+            } while (recvMsgSize > sizeof(int));
+            total_pack = ((int * ) buffer)[0];
+           	
+           	wait=0;
+           	printf("received header\n");
             
-            memcpy(&img_header, buffer, sizeof(struct header));
-            total_pack = img_header.pack_num;
-			printf("%s",img_header.info);
+           	
+           	//memcpy(&img_header, buffer, sizeof(struct header));
+            //total_pack = img_header.pack_num;
+			//printf("expecting %d packs, %s",img_header.pack_num, img_header.info);
 			
             char * longbuf = new char[PACK_SIZE * total_pack];
             for (int i = 0; i < total_pack; i++) {
@@ -75,7 +83,6 @@ int main(int argc, char * argv[]) {
             frames_count++;
 			gettimeofday(&stop,NULL);
 		
-		
 			// update fps counter every second
 			if ((1e6*(stop.tv_sec-start.tv_sec) +stop.tv_usec -start.tv_usec) > 1e6){
 				printf("recv fps: %d\n", frames_count);
@@ -84,12 +91,12 @@ int main(int argc, char * argv[]) {
 				}
             
 			// display image to screen
-            //imshow("recv", frame);
-            // waitKey(1);
+            imshow("recv", frame);
+            waitKey(1);
 
             // save image to frame
-            imwrite(argv[2], frame);
-            usleep(50000);
+            //imwrite(argv[2], frame);
+            //usleep(50000);
             
             free(longbuf);
             

@@ -20,6 +20,8 @@
  */
 
 #include "PracticalSocket.h"
+#include <string.h>
+#include <stdlib.h>
 
 #ifdef WIN32
   #include <winsock.h>         // For socket(), connect(), send(), and recv()
@@ -36,7 +38,6 @@
 #endif
 
 #include <errno.h>             // For errno
-#include <string.h>             // For memset
 
 using namespace std;
 
