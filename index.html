@@ -1,0 +1,15 @@
+<script type="text/javascript" >
+function ChangeMedia(){
+    var d = new Date();
+    var t = d.getTime();
+    document.getElementById('camera1').src = "cam1.jpg#"+t;
+    document.getElementById('camera2').src = "cam2.jpg#"+t;
+}
+var reloadcam = setInterval(ChangeMedia, 50);
+</script>
+
+<img id="camera1">
+<img id="camera2">
+
+
+
