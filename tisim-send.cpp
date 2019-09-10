@@ -108,8 +108,8 @@ int print_caps(int fd){
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmt.fmt.pix.width = 640;
 	fmt.fmt.pix.height = 480;
-	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8; // color
-	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB10; // tegra
+	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8; // color
+	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB10; // tegra
 	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_GREY; // greyscale
 
 	fmt.fmt.pix.field = V4L2_FIELD_NONE;
@@ -215,17 +215,19 @@ int capture_image(int fd){
     //imshow( "Display window", image );                   // Show our image inside it.
 	    
     //color
-//    memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
- //   cvtColor(raw, image, CV_BayerBG2BGR);
+    memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+    cvtColor(raw, image, CV_BayerBG2BGR);
     //imshow( "Display window", image );                   // Show our image inside it.
 	
+	
     // grey
-   memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
-   imencode(".jpg", raw, encoded, compression_params);
+   //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+   //imencode(".jpg", raw, encoded, compression_params);
    //imshow( "Display window", raw );                   
 	
+	// color
 	// here goes transmitting routine
-//	imencode(".jpg", image, encoded, compression_params);
+		imencode(".jpg", image, encoded, compression_params);
 	total_pack = 1 + (encoded.size() - 1) / PACK_SIZE;
     ibuf[0] = total_pack;
     gettimeofday(&timestamp, NULL);
