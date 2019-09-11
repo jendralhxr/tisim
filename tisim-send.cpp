@@ -217,9 +217,10 @@ int capture_image(int fd){
     //color
     memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
     cvtColor(raw, image, CV_BayerBG2BGR);
-    //imshow( "Display window", image );                   // Show our image inside it.
-	
-	
+//    namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
+    imshow( "Display window", image );                   // Show our image inside it.
+	waitKey(1);                                          // Wait for a keystroke in the window
+
     // grey
    //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
    //imencode(".jpg", raw, encoded, compression_params);
@@ -227,7 +228,7 @@ int capture_image(int fd){
 	
 	// color
 	// here goes transmitting routine
-		imencode(".jpg", image, encoded, compression_params);
+	imencode(".jpg", image, encoded, compression_params);
 	total_pack = 1 + (encoded.size() - 1) / PACK_SIZE;
     ibuf[0] = total_pack;
     gettimeofday(&timestamp, NULL);
@@ -245,7 +246,7 @@ int capture_image(int fd){
 //    waitKey(FRAME_INTERVAL);
 	
     //char filename[20];
-    //sprintf(filename, "image%d.jpg",i);
+    //sprintf(filename, "/tmp/walo.jpg");
     //imwrite(filename, image);
     return 0;
 }
@@ -289,7 +290,7 @@ int main(int argc, char **argv){
 		
 		// update fps counter every second
 		if ((1e6*(stop.tv_sec-start.tv_sec) +stop.tv_usec -start.tv_usec) > 1e6){
-			printf("send fps: %d\n", frames_count);
+			printf("send fps: %d %ld\n", frames_count, stop.tv_sec);
 			gettimeofday(&start,NULL);
 			frames_count= 0;
 			}
