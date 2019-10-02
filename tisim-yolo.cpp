@@ -71,7 +71,6 @@ std::vector<std::string> objects_names_from_file(std::string const filename) {
     return file_lines;
 }
 
-
 //yolo
 std::string  names_file = "coco.names";
 std::string  cfg_file = "yolov3-tiny.cfg";
@@ -401,8 +400,8 @@ int main(int argc, char **argv){
 			std::vector<bbox_t> result_vec = detector.detect(image);
 			draw_boxes(image, result_vec, obj_names);
 			//show_console_result(result_vec, obj_names);
-			cv::imshow("window name", image);
-			cv::waitKey(20);
+			//cv::imshow("window name", image);
+			//cv::waitKey(20);
 			send_image();
 			}
 		

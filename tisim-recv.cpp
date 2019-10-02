@@ -80,9 +80,9 @@ int main(int argc, char * argv[]) {
 				}
             
 			// display image to screen
-//			imshow("recv", frame);
+			imshow("recv", frame);
             if (frames_count%UPDATE_RENDER == 0){ // updated every 1/UPDATE_RENDER of FPS
-				imwrite(argv[2], frame);
+				//imwrite(argv[2], frame);
             	}
             	
             waitKey(1);

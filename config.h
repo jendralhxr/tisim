@@ -7,7 +7,7 @@
 // camera setup
 #define GAIN 10 // not really doing anything
 #define FPS 600 // maximum fps
-#define EXPOSURE 5000 // us
+#define EXPOSURE 1500 // us
 #define BRIGHTNESS 200
 
 // UDP parameters
