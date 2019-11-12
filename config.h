@@ -1,4 +1,4 @@
-#define DMK273
+#define DMK287
 
 #ifdef DFK287
 // image properties
@@ -18,7 +18,7 @@
 #define FPS 6000 // maximum fps
 #define EXPOSURE 2000 // us
 #define FPS 600 // maximum fps
-#define EXPOSURE 1500 // us
+#define EXPOSURE 4000 // us
 #define BRIGHTNESS 200
 
 // UDP parameters
