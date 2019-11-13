@@ -4,7 +4,7 @@
  *   
  *  compile against OpenCV
  *   $	g++ tisim-global.cpp -o tisim-global `pkg-config opencv --libs` 
- *   $	./tisim-global <camera-device> <exposure> <number of frames>  <save directory>  <receiver-host> <receiver-port>
+ *   $	./tisim-global <camera-device> <exposure> <number of frames>  <save directory> <receiver-host> <receiver-port>
  * 
  * adapted from:
  * https://gist.github.com/Circuitsoft/1126411
@@ -186,7 +186,7 @@ int set_props(char *device, int exposure){
 	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c white_balance_red_component=%d", device, HUE_RED);
 	system(command);
-	sprintf(command, "v4l2-ctl -d %s -c white_balance_blue_component=", device, HUE_BLUE);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_blue_component=%d", device, HUE_BLUE);
 	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c white_balance_green_component=%d", device, HUE_GREEN);
 	system(command);
@@ -232,9 +232,11 @@ int capture_image(int fd, int num){
      
 int main(int argc, char **argv){
 	gethostname(hostname, 256);
-	UDPSocket trigger_sock(PORT_TRIGGER);
-
 	//printf("host: %s", hostname);
+	UDPSocket trigger_sock(PORT_TRIGGER);
+	servAddress = argv[5]; // aserver address
+    servPort = Socket::resolveService(argv[6], "udp");
+	printf("sending to %s:%d\n", servAddress.c_str(), servPort);
 	
 	// device memory buffer map
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -279,12 +281,17 @@ int main(int argc, char **argv){
 	    gettimeofday(&(timestamp[0]), NULL);
 		ibuf[1] = timestamp[0].tv_sec;
 	    ibuf[2] = timestamp[0].tv_usec;
-	    sock.sendTo(ibuf, sizeof(long int) *3, servAddress, servPort);
-	    	
+	    printf("sending to %s:%d wait%ld\n", servAddress.c_str(), servPort, timestamp[0].tv_sec);
+		sock.sendTo(ibuf, sizeof(long int) *3, servAddress, servPort); // sending header
+		for (int i = 0; i < total_pack; i++) {
+			sock.sendTo( & encoded[i * PACK_SIZE], PACK_SIZE, servAddress, servPort);
+			// printf("sending content %d/%d size:%d\n", i+1, total_pack, PACK_SIZE);
+			}
+
 	    // waiting for trigger
 	    printf("waiting for trigger\n");
 		//recvMsgSize = trigger_sock.recvFrom(trigger_buffer, BUF_LEN, sourceAddress, sourcePort);
-	    if (sourcePort=PORT_TRIGGER){
+	    if (recvMsgSize!=0){
 			printf("start recording\n");
 			wait=0;
 			break;

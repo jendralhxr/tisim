@@ -51,7 +51,7 @@ int main(int argc, char * argv[]) {
             timestamp.tv_usec= ((long int * ) buffer)[2];
             
            	//wait=0;
-           	//~ printf("received header %d\n",recvMsgSize);
+           	//printf("received header %d\n",recvMsgSize);
            	
            	startimage:
            	char * longbuf = new char[PACK_SIZE * total_pack];

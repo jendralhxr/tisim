@@ -198,6 +198,14 @@ int set_props(char *device){
 	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c brightness=%d", device, BRIGHTNESS);
 	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_component_auto=0", device);
+	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_red_component=%d", device, HUE_RED);
+	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_blue_component=%d", device, HUE_BLUE);
+	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_green_component=%d", device, HUE_GREEN);
+	system(command);
 	}
 
 void draw_boxes(cv::Mat mat_img, std::vector<bbox_t> result_vec, std::vector<std::string> obj_names,
