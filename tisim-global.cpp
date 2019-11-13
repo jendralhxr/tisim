@@ -314,9 +314,7 @@ int main(int argc, char **argv){
 				}
 			} 
 		else {
-		    char msg[] = "grab!\x4\x4";
-		    printf("Got a connection; writing 'hello' then closing.\n");
-		    send(client_socket_fd, msg, sizeof(msg), 0);
+		    char msg[] = "grab!\x4\x3";
 		    close(client_socket_fd);
 		    printf("start recording\n");
 			wait=0;
