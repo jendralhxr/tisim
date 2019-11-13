@@ -178,7 +178,7 @@ int set_props(char *device){
 	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c white_balance_red_component=%d", device, HUE_RED);
 	system(command);
-	sprintf(command, "v4l2-ctl -d %s -c white_balance_blue_component", device, HUE_BLUE);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_blue_component=%d", device, HUE_BLUE);
 	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c white_balance_green_component=%d", device, HUE_GREEN);
 	system(command);

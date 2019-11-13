@@ -15,9 +15,9 @@
 #define FPS 600 // maximum fps
 #define EXPOSURE 4000 // us
 #define BRIGHTNESS 200
-#define HUE_RED 65
-#define HUE_BLUE 50
-#define HUE_GREEN 100
+#define HUE_RED 60
+#define HUE_GREEN 50
+#define HUE_BLUE 90
 
 
 // UDP parameters

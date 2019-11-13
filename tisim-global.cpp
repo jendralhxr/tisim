@@ -4,7 +4,7 @@
  *   
  *  compile against OpenCV
  *   $	g++ tisim-global.cpp -o tisim-global `pkg-config opencv --libs` 
- *   $	./tisim-global <camera-device> <exposure> <number of frames>  <save directory>
+ *   $	./tisim-global <camera-device> <exposure> <number of frames>  <save directory>  <receiver-host> <receiver-port>
  * 
  * adapted from:
  * https://gist.github.com/Circuitsoft/1126411
@@ -52,7 +52,22 @@ unsigned int frames_count;
 
 long int ibuf[3]; // header
 int total_pack;
+
+string servAddress;
+string sourceAddress; // Address of datagram source
+unsigned short servPort;
+unsigned short sourcePort; // Port of datagram source
+UDPSocket sock;
+char trigger_buffer[BUF_LEN]; // Buffer for echo string
+int recvMsgSize; // Size of received message
+#define PORT_TRIGGER 9999
+
+// da image
+vector < int > compression_params;
+vector < uchar > encoded;
             
+int wait;
+
 static int xioctl(int fd, int request, void *arg){
 	int r;
 	do r = ioctl (fd, request, arg);
@@ -106,12 +121,8 @@ int print_caps(int fd){
 	fmt.fmt.pix.width = 640;
 	fmt.fmt.pix.height = 480;
 	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8; // color
-	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB10; // tegra
-	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_GREY; // greyscale
-
 	fmt.fmt.pix.field = V4L2_FIELD_NONE;
 
-	
 	if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt)){
 		perror("Setting Pixel Format");
 		return 1;
@@ -161,7 +172,6 @@ int init_mmap(int fd){
 int set_props(char *device, int exposure){
 	sprintf(command, "v4l2-ctl -d %s -c exposure_auto=1", device);
 	system(command);
-	printf("exposure %d\n", exposure);
 	sprintf(command, "v4l2-ctl -d %s -c exposure_time_us=%d", device, exposure);
 	system(command);
 	//sprintf(command, "v4l2-ctl -d %s -c exposure_absolute=%d", device, EXPOSURE);
@@ -172,8 +182,17 @@ int set_props(char *device, int exposure){
 	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c brightness=%d", device, BRIGHTNESS);
 	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_component_auto=0", device);
+	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_red_component=%d", device, HUE_RED);
+	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_blue_component=", device, HUE_BLUE);
+	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_green_component=%d", device, HUE_GREEN);
+	system(command);
 	}
-	 
+	
+	
 int capture_image(int fd, int num){
 	 if(-1 == xioctl(fd, VIDIOC_QBUF, &buf))
     {
@@ -204,12 +223,17 @@ int capture_image(int fd, int num){
         return 1;
     }
     
-    memmove(buffer_list[num], buffer, sizeof(char)*FRAME_SIZE);
+    if (wait){
+	    memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+		}
+    else memmove(buffer_list[num], buffer, sizeof(char)*FRAME_SIZE);
     return 0;
 }
      
 int main(int argc, char **argv){
 	gethostname(hostname, 256);
+	UDPSocket trigger_sock(PORT_TRIGGER);
+
 	//printf("host: %s", hostname);
 	
 	// device memory buffer map
@@ -243,9 +267,30 @@ int main(int argc, char **argv){
         
 	set_props(argv[1], atoi(argv[2]));
     
-    // wait for trigger
-    // ----
+    wait=1;
     
+    // wait for trigger, display
+    while (wait){
+		if(capture_image(fd, 0)) return 1;
+		cvtColor(raw, image, CV_BayerBG2BGR);
+		imencode(".jpg", image, encoded, compression_params);
+		total_pack = 1 + (encoded.size() - 1) / PACK_SIZE;
+	    ibuf[0] = total_pack;
+	    gettimeofday(&(timestamp[0]), NULL);
+		ibuf[1] = timestamp[0].tv_sec;
+	    ibuf[2] = timestamp[0].tv_usec;
+	    sock.sendTo(ibuf, sizeof(long int) *3, servAddress, servPort);
+	    	
+	    // waiting for trigger
+	    printf("waiting for trigger\n");
+		//recvMsgSize = trigger_sock.recvFrom(trigger_buffer, BUF_LEN, sourceAddress, sourcePort);
+	    if (sourcePort=PORT_TRIGGER){
+			printf("start recording\n");
+			wait=0;
+			break;
+			}
+		}
+	    
     // capture   
 	for (int framenum= 0; framenum<framenum_max; framenum++){
 		gettimeofday(&(timestamp[framenum]), NULL);
