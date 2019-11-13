@@ -26,7 +26,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "config.h" // camera params
+#include "PracticalSocket.h"      // For UDPSocket and SocketException
+#include "config.h" // camera parameters
 
 using namespace std;
 using namespace cv;

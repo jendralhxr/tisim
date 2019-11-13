@@ -11,6 +11,7 @@
  * https://github.com/chenxiaoqino/udp-image-streaming/
  */
 
+
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/videodev2.h>
@@ -27,13 +28,13 @@
 #include <opencv2/opencv.hpp>
 #include <thread>
 
-#include "PracticalSocket.h"      // For UDPSocket and SocketException
-#include "config.h"
-
 // darknet yolo detection w/ opencv
 #define GPU
 #define OPENCV
 #include "yolo_v2_class.hpp"
+
+#include "PracticalSocket.h"      // For UDPSocket and SocketException
+#include "config.h" // camera parameters
 
 using namespace std;
 using namespace cv;

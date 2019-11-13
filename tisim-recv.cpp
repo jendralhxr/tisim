@@ -41,13 +41,16 @@ int main(int argc, char * argv[]) {
 		gettimeofday(&start,NULL);
         while (1) {
             // Block until receive message from a client
-            int wait;
+            //int wait;
 			
            	do recvMsgSize = sock.recvFrom(buffer, BUF_LEN, sourceAddress, sourcePort);
             while (recvMsgSize != sizeof(long int) * 3);
             
-            total_pack = ((int * ) buffer)[0];
-           	wait=0;
+            total_pack = ((long int * ) buffer)[0];
+            timestamp.tv_sec= ((long int * ) buffer)[1];
+            timestamp.tv_usec= ((long int * ) buffer)[2];
+            
+           	//wait=0;
            	//~ printf("received header %d\n",recvMsgSize);
            	
            	startimage:

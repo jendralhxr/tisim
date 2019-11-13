@@ -174,6 +174,14 @@ int set_props(char *device){
 	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c brightness=%d", device, BRIGHTNESS);
 	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_component_auto=0", device);
+	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_red_component=%d", device, HUE_RED);
+	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_blue_component", device, HUE_BLUE);
+	system(command);
+	sprintf(command, "v4l2-ctl -d %s -c white_balance_green_component=%d", device, HUE_GREEN);
+	system(command);
 	}
 	 
 int capture_image(int fd){
@@ -218,8 +226,8 @@ int capture_image(int fd){
     memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
     cvtColor(raw, image, CV_BayerBG2BGR);
 //    namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
-    imshow( "Display window", image );                   // Show our image inside it.
-	waitKey(1);                                          // Wait for a keystroke in the window
+//    imshow( "Display window", image );                   // Show our image inside it.
+//	waitKey(1);                                          // Wait for a keystroke in the window
 
     // grey
    //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
