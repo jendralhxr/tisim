@@ -9,6 +9,8 @@
  * adapted from:
  * https://gist.github.com/Circuitsoft/1126411
  * https://github.com/chenxiaoqino/udp-image-streaming/
+ * https://jameshfisher.com/2017/04/05/set_socket_nonblocking/
+ * 
  */
 
 #include <errno.h>
@@ -22,11 +24,13 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <errno.h>
+#include "PracticalSocket.h"      // For UDPSocket and SocketException
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
-
-#include "PracticalSocket.h"      // For UDPSocket and SocketException
 #include "config.h" // camera parameters
 
 using namespace std;
@@ -54,19 +58,18 @@ long int ibuf[3]; // header
 int total_pack;
 
 string servAddress;
-string sourceAddress; // Address of datagram source
 unsigned short servPort;
-unsigned short sourcePort; // Port of datagram source
 UDPSocket sock;
-char trigger_buffer[BUF_LEN]; // Buffer for echo string
-int recvMsgSize; // Size of received message
 #define PORT_TRIGGER 9999
 
-// da image
+// image for viewing prior to capture
 vector < int > compression_params;
 vector < uchar > encoded;
             
 int wait;
+
+int guard(int n, char * err) { if (n == -1) { perror(err); exit(1); } return n; }
+
 
 static int xioctl(int fd, int request, void *arg){
 	int r;
@@ -232,11 +235,21 @@ int capture_image(int fd, int num){
      
 int main(int argc, char **argv){
 	gethostname(hostname, 256);
-	//printf("host: %s", hostname);
-	UDPSocket trigger_sock(PORT_TRIGGER);
-	servAddress = argv[5]; // aserver address
+	// printf("host: %s", hostname);
+	servAddress = argv[5]; // server address
     servPort = Socket::resolveService(argv[6], "udp");
 	printf("sending to %s:%d\n", servAddress.c_str(), servPort);
+	
+	// for trigger, TCP
+	int listen_socket_fd = guard(socket(AF_INET, SOCK_STREAM, 0), "could not create TCP listening socket");
+	int flags = guard(fcntl(listen_socket_fd, F_GETFL), "could not get flags on TCP listening socket");
+	guard(fcntl(listen_socket_fd, F_SETFL, flags | O_NONBLOCK), "could not set TCP listening socket to be non-blocking");
+	struct sockaddr_in addr;
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(PORT_TRIGGER);
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	guard(bind(listen_socket_fd, (struct sockaddr *) &addr, sizeof(addr)), "could not bind");
+	guard(listen(listen_socket_fd, 100), "could not listen");
 	
 	// device memory buffer map
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -281,7 +294,7 @@ int main(int argc, char **argv){
 	    gettimeofday(&(timestamp[0]), NULL);
 		ibuf[1] = timestamp[0].tv_sec;
 	    ibuf[2] = timestamp[0].tv_usec;
-	    printf("sending to %s:%d wait%ld\n", servAddress.c_str(), servPort, timestamp[0].tv_sec);
+	    //printf("sending to %s:%d wait%ld\n", servAddress.c_str(), servPort, timestamp[0].tv_sec);
 		sock.sendTo(ibuf, sizeof(long int) *3, servAddress, servPort); // sending header
 		for (int i = 0; i < total_pack; i++) {
 			sock.sendTo( & encoded[i * PACK_SIZE], PACK_SIZE, servAddress, servPort);
@@ -289,14 +302,27 @@ int main(int argc, char **argv){
 			}
 
 	    // waiting for trigger
-	    printf("waiting for trigger\n");
-		//recvMsgSize = trigger_sock.recvFrom(trigger_buffer, BUF_LEN, sourceAddress, sourcePort);
-	    if (recvMsgSize!=0){
-			printf("start recording\n");
+		int client_socket_fd = accept(listen_socket_fd, NULL, NULL);
+	    if (client_socket_fd == -1){
+		    if (errno == EWOULDBLOCK){
+		        //printf("No pending connections; sleeping.\n");
+		        //sleep(1);
+			    } 
+			else {
+			    perror("error when accepting connection");
+		        exit(1);
+				}
+			} 
+		else {
+		    char msg[] = "grab!\x4\x4";
+		    printf("Got a connection; writing 'hello' then closing.\n");
+		    send(client_socket_fd, msg, sizeof(msg), 0);
+		    close(client_socket_fd);
+		    printf("start recording\n");
 			wait=0;
 			break;
-			}
-		}
+		    }
+	 	}
 	    
     // capture   
 	for (int framenum= 0; framenum<framenum_max; framenum++){
