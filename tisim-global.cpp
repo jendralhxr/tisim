@@ -294,8 +294,7 @@ int main(int argc, char **argv){
 	    gettimeofday(&(timestamp[0]), NULL);
 		ibuf[1] = timestamp[0].tv_sec;
 	    ibuf[2] = timestamp[0].tv_usec;
-	    //printf("sending to %s:%d wait%ld\n", servAddress.c_str(), servPort, timestamp[0].tv_sec);
-		sock.sendTo(ibuf, sizeof(long int) *3, servAddress, servPort); // sending header
+	    sock.sendTo(ibuf, sizeof(long int) *3, servAddress, servPort); // sending header
 		for (int i = 0; i < total_pack; i++) {
 			sock.sendTo( & encoded[i * PACK_SIZE], PACK_SIZE, servAddress, servPort);
 			// printf("sending content %d/%d size:%d\n", i+1, total_pack, PACK_SIZE);
@@ -314,7 +313,6 @@ int main(int argc, char **argv){
 				}
 			} 
 		else {
-		    char msg[] = "grab!\x4\x3";
 		    close(client_socket_fd);
 		    printf("start recording\n");
 			wait=0;
@@ -333,7 +331,7 @@ int main(int argc, char **argv){
 		memmove(raw.data, buffer_list[framenum], sizeof(char)*FRAME_SIZE);
 		cvtColor(raw, image, CV_BayerBG2BGR);
 		sprintf(filename, "%s/%s-%ld%06ld.tif", argv[4], hostname, timestamp[framenum].tv_sec, timestamp[framenum].tv_usec);
-		printf("saving: %s\n", filename); 
+		printf("saving: [%6d/%d]\n", framenum, framenum_max); 
 		imwrite(filename, image);
 	}
 		
