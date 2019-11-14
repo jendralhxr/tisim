@@ -331,7 +331,7 @@ int main(int argc, char **argv){
 		memmove(raw.data, buffer_list[framenum], sizeof(char)*FRAME_SIZE);
 		cvtColor(raw, image, CV_BayerBG2BGR);
 		sprintf(filename, "%s/%s-%ld%06ld.tif", argv[4], hostname, timestamp[framenum].tv_sec, timestamp[framenum].tv_usec);
-		printf("saving: [%6d/%d]\n", framenum, framenum_max); 
+		printf("saving: [%6d/%d] %s\n", framenum, framenum_max, filename); 
 		imwrite(filename, image);
 	}
 		
