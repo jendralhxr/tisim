@@ -4,7 +4,6 @@
 #include <unistd.h>
 #define PORT_TRIGGER 9999
 
-
 // usage: ./tisim-trigger [addresses]
 
 char command[256];
