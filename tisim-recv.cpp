@@ -66,7 +66,7 @@ int main(int argc, char * argv[]) {
             }
  
             Mat rawData = Mat(1, PACK_SIZE * total_pack, CV_8UC1, longbuf);
-            Mat frame = imdecode(rawData, CV_LOAD_IMAGE_COLOR);
+            Mat frame = imdecode(rawData, IMREAD_COLOR);
             if (frame.size().width == 0) {
                 cerr << "decode failure!" << endl;
                 continue;

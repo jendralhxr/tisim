@@ -74,8 +74,10 @@ std::vector<std::string> objects_names_from_file(std::string const filename) {
 
 //yolo
 std::string  names_file = "coco.names";
-std::string  cfg_file = "yolov3-tiny.cfg";
-std::string  weights_file = "yolov3-tiny.weights";
+//std::string  cfg_file = "yolov3-tiny.cfg";
+//std::string  weights_file = "yolov3-tiny.weights";
+std::string  cfg_file = "yolov3/cfg/yolov3-spp-1cls.cfg";
+std::string  weights_file = "yolov3/weights/last1cls_1clscfg.pt";
 vector <string> obj_names = objects_names_from_file(names_file); 
 Detector detector(cfg_file, weights_file);
 //float const thresh =  0.2;
