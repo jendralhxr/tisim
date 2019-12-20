@@ -27,6 +27,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include <thread>
+#include <fstream>
 
 // darknet yolo detection w/ opencv
 #define GPU
@@ -72,12 +73,14 @@ std::vector<std::string> objects_names_from_file(std::string const filename) {
     return file_lines;
 }
 
+
+
 //yolo
 std::string  names_file = "coco.names";
-//std::string  cfg_file = "yolov3-tiny.cfg";
-//std::string  weights_file = "yolov3-tiny.weights";
-std::string  cfg_file = "yolov3/cfg/yolov3-spp-1cls.cfg";
-std::string  weights_file = "yolov3/weights/last1cls_1clscfg.pt";
+std::string  cfg_file = "yolov3-tiny.cfg";
+std::string  weights_file = "yolov3-tiny.weights";
+//std::string  cfg_file = "yolov3/cfg/yolov3-spp-1cls.cfg";
+//std::string  weights_file = "yolov3/weights/last1cls_1clscfg.pt";
 vector <string> obj_names = objects_names_from_file(names_file); 
 Detector detector(cfg_file, weights_file);
 //float const thresh =  0.2;
@@ -394,7 +397,7 @@ int main(int argc, char **argv){
 	
 	set_props(argv[1]); // setting camera properties
      
-    compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(IMWRITE_JPEG_QUALITY);
     compression_params.push_back(ENCODE_QUALITY);
 	auto obj_names = objects_names_from_file(names_file);
 	

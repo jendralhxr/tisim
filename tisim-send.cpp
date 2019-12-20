@@ -224,7 +224,7 @@ int capture_image(int fd){
 	    
     //color
     memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
-    cvtColor(raw, image, CV_BayerBG2BGR);
+    cvtColor(raw, image, COLOR_BayerBG2BGR);
 //    namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
 //    imshow( "Display window", image );                   // Show our image inside it.
 //	waitKey(1);                                          // Wait for a keystroke in the window
@@ -281,7 +281,7 @@ int main(int argc, char **argv){
 	
 	set_props(argv[1]);
      
-    compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(IMWRITE_JPEG_QUALITY);
     compression_params.push_back(ENCODE_QUALITY);
 
 	try{

@@ -287,7 +287,7 @@ int main(int argc, char **argv){
     // wait for trigger, display
     while (wait){
 		if(capture_image(fd, 0)) return 1;
-		cvtColor(raw, image, CV_BayerBG2BGR);
+		cvtColor(raw, image, COLOR_BayerBG2BGR);
 		imencode(".jpg", image, encoded, compression_params);
 		total_pack = 1 + (encoded.size() - 1) / PACK_SIZE;
 	    ibuf[0] = total_pack;
@@ -329,7 +329,7 @@ int main(int argc, char **argv){
 	// saving
 	for (int framenum= 0; framenum<framenum_max; framenum++){
 		memmove(raw.data, buffer_list[framenum], sizeof(char)*FRAME_SIZE);
-		cvtColor(raw, image, CV_BayerBG2BGR);
+		cvtColor(raw, image, COLOR_BayerBG2BGR);
 		sprintf(filename, "%s/%s-%ld%06ld.tif", argv[4], hostname, timestamp[framenum].tv_sec, timestamp[framenum].tv_usec);
 		printf("saving: [%6d/%d] %s\n", framenum, framenum_max, filename); 
 		imwrite(filename, image);
