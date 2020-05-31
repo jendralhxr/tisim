@@ -240,6 +240,8 @@ int main(int argc, char **argv){
 		// update fps counter every second
 		if ((1e6*(stop.tv_sec-start.tv_sec) +stop.tv_usec -start.tv_usec) > 1e6){
 			printf("fps: %d\n", frames_count);
+			printf("fps: %f\n", frames_count/ (double)((stop.tv_sec - start.tv_sec) - (stop.tv_usec - start.tv_usec)/1e6 ));
+	
 			gettimeofday(&start,NULL);
 			frames_count= 0;
 			}
