@@ -23,29 +23,20 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include "config.h"
+#include "v4ldevice.cpp"
 
 using namespace std;
 using namespace cv;
 
 char command[256];
-uint8_t *buffer;
-fd_set fds;
-int fd; // camera file descriptor
-
+unsigned char* buffer = NULL;
+    
 Mat raw = Mat(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC1);
 Mat image= Mat(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC3);
 
-struct v4l2_buffer buf;
 struct timeval timeout;
 struct timeval start, stop, timestamp;
 unsigned int frames_count;
-            
-static int xioctl(int fd, int request, void *arg){
-	int r;
-	do r = ioctl (fd, request, arg);
-	while (-1 == r && EINTR == errno);
-	return r;
-}
  
 int print_caps(int fd){
 	struct v4l2_capability caps = {};
@@ -117,34 +108,6 @@ int print_caps(int fd){
 	return 0;
 	}
  
-int init_mmap(int fd){
-    struct v4l2_requestbuffers req = {0};
-    req.count = 1;
-    req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    req.memory = V4L2_MEMORY_MMAP;
- 
-    if (-1 == xioctl(fd, VIDIOC_REQBUFS, &req))
-    {
-        perror("Requesting Buffer");
-        return 1;
-    }
- 
-    struct v4l2_buffer buf = {0};
-    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    buf.memory = V4L2_MEMORY_MMAP;
-    buf.index = 0;
-    if(-1 == xioctl(fd, VIDIOC_QUERYBUF, &buf))
-    {
-        perror("Querying Buffer");
-        return 1;
-    }
- 
-    buffer = (unsigned char*) mmap (NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, buf.m.offset);
-    printf("Length: %d\nAddress: %p\n", buf.length, buffer);
-    
-    return 0;
-}
-
 int set_props(char *device){
 	sprintf(command, "v4l2-ctl -d %s -c exposure_auto=1", device);
 	system(command);
@@ -158,89 +121,44 @@ int set_props(char *device){
 	system(command);
 	sprintf(command, "v4l2-ctl -d %s -c brightness=%d", device, BRIGHTNESS);
 	system(command);
+	sprintf(command, "v4l2-ctl -d %s -p %d", device, 480);
+	system(command);
 	}
-	 
-int capture_image(int fd){
-    if(-1 == xioctl(fd, VIDIOC_QBUF, &buf))
-    {
-        perror("Query Buffer");
-        return 1;
-    }
- 
-    if(-1 == xioctl(fd, VIDIOC_STREAMON, &buf.type))
-    {
-        perror("Start Capture");
-        return 1;
-    }
-
-	// timing from camera
-    FD_ZERO(&fds);
-    FD_SET(fd, &fds);
-    
-    timeout.tv_sec = 2;
-    int r = select(fd+1, &fds, NULL, NULL, &timeout);
-    if(-1 == r) // timout after 2 secs
-    {
-        perror("Waiting for Frame, timeout");
-        return 1;
-    }
- 
-    if(-1 == xioctl(fd, VIDIOC_DQBUF, &buf))
-    {
-        perror("Retrieving Frame");
-        return 1;
-    }
-    
-    //color
-    //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
-    //cvtColor(raw, image, CV_BayerBG2BGR);
-    //imshow( "Display window", image );                   // Show our image inside it.
-		
-   // grey
-   memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
-   imshow( "Display window", raw );                   
-waitKey(1);
-//    
-	//imencode(".jpg", raw, encoded, compression_params);
-   
-    //char filename[20];
-    //sprintf(filename, "image%d.jpg",i);
-    //imwrite(filename, image);
-    return 0;
-}
      
 int main(int argc, char **argv){
-
-	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	buf.memory = V4L2_MEMORY_MMAP;
-	buf.index = 0;
- 
-	fd = open(argv[1], O_RDWR);
-	if (fd == -1){
-		perror("Opening video device");
-		return 1;
-	}
-	if(print_caps(fd)){
-		perror("Fail to access camera properties");
-		return 1;
-		}
-	if(init_mmap(fd)){
-		perror("Fail to initialize memory");
-		return 1;
-		}  
-	
+	open_device(argv[1]);
 	set_props(argv[1]);
-             
+    init_device(FRAME_WIDTH, FRAME_HEIGHT);
+	setFPS(FPS);
+	start_capturing();
+	
 	gettimeofday(&start,NULL);
 	while(1){
-		if(capture_image(fd)) return 1;
 		frames_count++;
 		gettimeofday(&stop,NULL);
+		
+		buffer = snapFrame();
+		if( buffer != NULL ){ 
+            //color
+			//memcpy(raw.imageData, buffer, sizeof(char)*FRAME_SIZE);
+			memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+			cvtColor(raw, image, COLOR_BayerBG2BGR);
+			imshow( "Display window", image );
+		
+			// grey
+			//memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+			//imshow( "Display window", raw );                   
+			waitKey(1);
+			}
+        else {
+			printf("No image buffer retrieved.\n");
+            break;
+			}
 		
 		// update fps counter every second
 		if ((1e6*(stop.tv_sec-start.tv_sec) +stop.tv_usec -start.tv_usec) > 1e6){
 			printf("fps: %d\n", frames_count);
-			printf("fps: %f\n", frames_count/ (double)((stop.tv_sec - start.tv_sec) - (stop.tv_usec - start.tv_usec)/1e6 ));
+			//printf("fps: %f\n", frames_count/ (double)((stop.tv_sec - start.tv_sec) - (stop.tv_usec - start.tv_usec)/1e6 ));
 	
 			gettimeofday(&start,NULL);
 			frames_count= 0;

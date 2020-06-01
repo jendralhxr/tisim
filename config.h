@@ -11,9 +11,9 @@
 */
 
 // camera setup
-#define GAIN 10 // not really doing anything
-#define FPS 120 // maximum fps
-#define EXPOSURE 4000 // us
+#define GAIN 20 // not really doing anything
+#define FPS 480 // maximum fps
+#define EXPOSURE 1000 // us
 #define BRIGHTNESS 200
 #define HUE_RED 60
 #define HUE_GREEN 50
