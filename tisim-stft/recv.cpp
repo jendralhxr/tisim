@@ -58,11 +58,11 @@ struct sending_buffer{
 char *helper_ptr;
 
 void* processNetworkisplay(void *arg){
-	struct timespec timestamp;
+	struct timespec timestamp, start, timestamp_recv, start_recv;
 	int *port;
 	port= (int*) arg;
 	printf("started on port %d\n",*port);
-	unsigned int len;
+	unsigned int len, frames_count;
 	unsigned long int netbuf[BUF_LEN]; // for header
 	char buf[BUF_LEN+8]; // for content
 	int sequence, num, total_pack;
@@ -81,6 +81,7 @@ void* processNetworkisplay(void *arg){
     si_me.sin_addr.s_addr = htonl(INADDR_ANY);
     if (bind(s, (struct sockaddr *) &si_me, sizeof(si_me))==-1) perror("bind");
     
+    clock_gettime(CLOCK_MONOTONIC, &start_recv);
     while (1){
 		len = recvfrom(s, buf, sizeof(struct sending_buffer), 0, (struct sockaddr *) &si_other, &slen);
 		//printf("from %s:%d len, %d byte\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), len);
@@ -90,6 +91,14 @@ void* processNetworkisplay(void *arg){
 				total_pack= netbuf[0];
 				timestamp.tv_sec= netbuf[1];
 				timestamp.tv_nsec= netbuf[2];
+				// fps counter
+				clock_gettime(CLOCK_MONOTONIC, &timestamp_recv);
+    			if (timestamp_recv.tv_sec-start_recv.tv_sec > 2){
+					printf("port %d, fps: %f\n", *port, frames_count / (double) (timestamp_recv.tv_sec-start_recv.tv_sec + (timestamp_recv.tv_nsec-start_recv.tv_nsec)/1e9));
+					frames_count= 0;
+					clock_gettime(CLOCK_MONOTONIC, &start_recv);
+					}
+				else frames_count++;
 				break;
 			case (4100):  
 				memcpy(&recv_buffer, buf, sizeof(struct sending_buffer));

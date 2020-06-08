@@ -165,7 +165,7 @@ void* processNetwork(void *arg){
 		sendbuf.id= 0;
 		sendbuf.sequence= i;
 		memmove(sendbuf.data, & helper_ptr[i*PACK_SIZE], PACK_SIZE);
-		printf("sending %u image %u/%d size:%lu\n", sendbuf.id, sendbuf.sequence, total_pack, sizeof(struct sending_buffer));
+		//printf("sending %u image %u/%d size:%lu\n", sendbuf.id, sendbuf.sequence, total_pack, sizeof(struct sending_buffer));
 		sendto(sockfd, &sendbuf, sizeof(struct sending_buffer), 0, (struct sockaddr *) &si_other, slen);
         }
 	
@@ -180,7 +180,7 @@ void* processNetwork(void *arg){
 			sendbuf.sequence= i;
 			memmove(sendbuf.data, & helper_ptr[i*PACK_SIZE], PACK_SIZE);
 			sendto(sockfd, &sendbuf, sizeof(struct sending_buffer), 0, (struct sockaddr *) &si_other, slen);
-			printf("sending %d object %d/%d size:%lu\n", sendbuf.id, sendbuf.sequence, total_pack, sizeof(struct sending_buffer));
+			//printf("sending %d object %d/%d size:%lu\n", sendbuf.id, sendbuf.sequence, total_pack, sizeof(struct sending_buffer));
 			}
 		}
 	
