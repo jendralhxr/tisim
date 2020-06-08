@@ -69,11 +69,12 @@ struct dataset_object{
 } object[OBJECT_COUNT_MAX], *object_ptr;
 
 struct sending_buffer{
-	unsigned int sequence;
+	short int id; 
+	short int sequence;
 	char data[PACK_SIZE];
-	} sendbuf;
+	} sendbuf, *sendbuf_ptr;
 	
-char *helper_ptr;
+char *helper_ptr, plainbuf[8000];
 
 struct timespec start, stop, timestamp;
 
@@ -133,12 +134,15 @@ void* processGPU(void *arg)
 
 void* processNetwork(void *arg){
 	int total_pack;
+	int ga;
+	
 	while(1){
 	
 	// acquring data from other places, put it in the struct
 	// image
 	memmove(imagepacket.image_input, raw_frame.data, FRAME_SIZE);
 	memmove(imagepacket.image_peak, Color_map.data, FRAME_SIZE*3);
+	
 	// objects
 	// ..
 	// ..
@@ -147,40 +151,36 @@ void* processNetwork(void *arg){
 	total_pack = 1 + sizeof(struct dataset_image) / PACK_SIZE;
     netbuf[0] = total_pack;
 	netbuf[1] = timestamp.tv_sec;
-    netbuf[2] = timestamp.tv_nsec;
-    sendto(sockfd, netbuf, sizeof(long int)*3, 0, (struct sockaddr *) &si_other, slen);
-    printf("timestamp %ld, totalpack %d\n",timestamp.tv_sec, total_pack);
+    netbuf[2] = timestamp.tv_nsec;    
+    char mbuf[8];
+    memcpy(mbuf, netbuf, 32);
+    ga= sendto(sockfd, mbuf, 32, 0, (struct sockaddr *) &si_other, slen);
+    //printf("%d: %lx -- %lx -- %lx\n",ga, netbuf[0], netbuf[1], netbuf[2]);
+	//printf("timestamp %lu:%lu, totalpack %d %d\n",timestamp.tv_sec, timestamp.tv_nsec, total_pack, ga);
     
-	//sending content, image
-	imagepacket_ptr = &imagepacket;
-	helper_ptr= (char*) imagepacket_ptr;
+    //sending content, image
+    imagepacket_ptr = &imagepacket;
+    helper_ptr= (char*) imagepacket_ptr;
 	for (int i=0; i<total_pack; i++) {
-		netbuf[0] = 0; // 0 means image package
-		netbuf[1] = i; // sequence number of the package
-		// sequence
-		//printf("image sequence: %d/%d %d\n", i, total_pack, sizeof(long int)*2);
-		sendto(sockfd, netbuf, sizeof(long int)*2, 0, (struct sockaddr *) &si_other, slen);
-    	// cotent
-		printf("image content: %d/%d %d\n", i, total_pack, PACK_SIZE);
-		sendto(sockfd, & helper_ptr[i*PACK_SIZE], PACK_SIZE, 0, (struct sockaddr *) &si_other, slen);
+		sendbuf.id= 0;
+		sendbuf.sequence= i;
+		memmove(sendbuf.data, & helper_ptr[i*PACK_SIZE], PACK_SIZE);
+		printf("sending %u image %u/%d size:%lu\n", sendbuf.id, sendbuf.sequence, total_pack, sizeof(struct sending_buffer));
+		sendto(sockfd, &sendbuf, sizeof(struct sending_buffer), 0, (struct sockaddr *) &si_other, slen);
         }
 	
-	object_count=1;
+	object_count=3;
 	total_pack = 1 + sizeof(struct dataset_object) / PACK_SIZE;
 	for (int num=0; num<object_count; num++){
 		object_ptr = &(object[num]);
 		helper_ptr= (char*) object_ptr;
 		//sending content, object
 		for (int i=0; i<total_pack; i++) {
-			netbuf[0] = num+1;
-			netbuf[1] = i;
-			// sequence
-			//printf("object %d sequence: %d/%d %d\n", num, i, total_pack, sizeof(long int)*2);
-			sendto(sockfd, netbuf, sizeof(long int)*2, 0, (struct sockaddr *) &si_other, slen);
-			// cotent
-    		printf("object %d content: %d/%d %d\n", num, i, total_pack, PACK_SIZE);
-			sendto(sockfd, & helper_ptr[i*PACK_SIZE], PACK_SIZE, 0, (struct sockaddr *) &si_other, slen);
-			//printf("sending content %d/%d size:%d\n", i+1, total_pack, PACK_SIZE);
+			sendbuf.id= num+1;
+			sendbuf.sequence= i;
+			memmove(sendbuf.data, & helper_ptr[i*PACK_SIZE], PACK_SIZE);
+			sendto(sockfd, &sendbuf, sizeof(struct sending_buffer), 0, (struct sockaddr *) &si_other, slen);
+			printf("sending %d object %d/%d size:%lu\n", sendbuf.id, sendbuf.sequence, total_pack, sizeof(struct sending_buffer));
 			}
 		}
 	
@@ -235,13 +235,13 @@ int main(int argc, char *argv[]){
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	while(wKey == -1 )
     {
-		
+		clock_gettime(CLOCK_MONOTONIC, &timestamp);
         ImageBuffer = snapFrame();
 
         if( ImageBuffer != NULL )
         {
             memmove(raw_frame.data, ImageBuffer, sizeof(char)*FRAME_SIZE);
-			clock_gettime(CLOCK_MONOTONIC, &timestamp);
+//			clock_gettime(CLOCK_MONOTONIC, &timestamp);
 			cycle++;
 			if (timestamp.tv_sec-start.tv_sec > 2){
 				printf("fps: %f\n", cycle / (double) (timestamp.tv_sec-start.tv_sec + (timestamp.tv_nsec-start.tv_nsec)/1e9));
