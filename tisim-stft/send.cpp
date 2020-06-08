@@ -144,7 +144,7 @@ void* processNetwork(void *arg){
 	netbuf[1] = timestamp.tv_sec;
     netbuf[2] = timestamp.tv_nsec;
     sendto(sockfd, netbuf, sizeof(long int)*3, 0, (struct sockaddr *) &si_other, slen);
-    //printf("sending image from %ld: totalpack %d\n",timestamp.tv_sec, total_pack);
+    printf("timestamp %ld, totalpack %d\n",timestamp.tv_sec, total_pack);
     
 	//sending content, image
 	imagepacket_ptr = &imagepacket;
@@ -153,14 +153,16 @@ void* processNetwork(void *arg){
 		netbuf[0] = 0; // 0 means image package
 		netbuf[1] = i; // sequence number of the package
 		// sequence
+		printf("image sequence: %d/%d %d\n", i, total_pack, sizeof(long int)*2);
 		sendto(sockfd, netbuf, sizeof(long int)*2, 0, (struct sockaddr *) &si_other, slen);
     	// cotent
-    	sendto(sockfd, & helper_ptr[i*PACK_SIZE], PACK_SIZE, 0, (struct sockaddr *) &si_other, slen);
+		printf("image content: %d/%d %d\n", i, total_pack, PACK_SIZE);
+		sendto(sockfd, & helper_ptr[i*PACK_SIZE], PACK_SIZE, 0, (struct sockaddr *) &si_other, slen);
         }
 	
 	object_count=2;
 	total_pack = 1 + sizeof(struct dataset_object) / PACK_SIZE;
-	for (int num; num<object_count; num++){
+	for (int num=0; num<object_count; num++){
 		object_ptr = &(object[num]);
 		helper_ptr= (char*) object_ptr;
 		//sending content, object
@@ -168,9 +170,11 @@ void* processNetwork(void *arg){
 			netbuf[0] = num+1;
 			netbuf[1] = i;
 			// sequence
+			printf("object %d sequence: %d/%d %d\n", num, i, total_pack, sizeof(long int)*2);
 			sendto(sockfd, netbuf, sizeof(long int)*2, 0, (struct sockaddr *) &si_other, slen);
 			// cotent
-    		sendto(sockfd, & helper_ptr[i*PACK_SIZE], PACK_SIZE, 0, (struct sockaddr *) &si_other, slen);
+    		printf("object %d content: %d/%d %d\n", num, i, total_pack, PACK_SIZE);
+			sendto(sockfd, & helper_ptr[i*PACK_SIZE], PACK_SIZE, 0, (struct sockaddr *) &si_other, slen);
 			//printf("sending content %d/%d size:%d\n", i+1, total_pack, PACK_SIZE);
 			}
 		}

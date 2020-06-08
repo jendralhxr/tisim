@@ -26,6 +26,7 @@ unsigned int object_count, threads_count;
 int *thread_handler;
 pthread_t *netdisplay;
 int *PORTS; // open ports for senders
+char *frameupdate;
 	
 /*ω
 ・Input image (VGA, JPEG compressed (unsigned char))
@@ -74,7 +75,7 @@ void* processNetworkisplay(void *arg){
     while (1){
 		repeat:
 		len = recvfrom(s, buf, BUF_LEN, 0, (struct sockaddr *) &si_other, &slen);
-		printf("Received from %s:%d\nData: %d byte\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), len);
+		printf("from %s:%d len, %d byte %d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), len, sizeof(long int)*2);
 		switch (len){
 			case (sizeof(long int)*3): goto timeheader; break;
 			case (sizeof(long int)*2): goto sequence; break;
@@ -85,12 +86,14 @@ void* processNetworkisplay(void *arg){
 		memmove(netbuf, buf, sizeof(sizeof(long int)*3));
 		timestamp.tv_sec= netbuf[1];
 		timestamp.tv_nsec= netbuf[2];
+		//printf("timestamp: %ld %ld\n", timestamp.tv_sec, timestamp.tv_nsec);
 		goto repeat;
 		
 		sequence:
 		memmove(netbuf, buf, sizeof(sizeof(long int)*2));
 		sequence= netbuf[1];
-		if (netbuf[0]==0) goto image_seq;
+		//printf("image seq: %d\n", sequence);
+    	if (netbuf[0]==0) goto image_seq;
 		else {
 			num= netbuf[0];
 			goto object_seq;
@@ -100,16 +103,16 @@ void* processNetworkisplay(void *arg){
 		imagepacket_ptr = &imagepacket;
 		helper_ptr= (char*) imagepacket_ptr;
 		len = recvfrom(s, buf, BUF_LEN, 0, (struct sockaddr *) &si_other, &slen);
-		mempcpy(& helper_ptr[i*PACK_SIZE], buf, PACK_SIZE);
-		//sendto(sockfd, , PACK_SIZE, 0, (struct sockaddr *) &si_other, slen);
+		mempcpy(& helper_ptr[sequence*PACK_SIZE], buf, PACK_SIZE);
+		//printf("image seq: %d\n", sequence);
     	goto repeat;
 		
 		object_seq:
 		object_ptr = &(object[num]);
 		helper_ptr= (char*) object_ptr;
 		len = recvfrom(s, buf, BUF_LEN, 0, (struct sockaddr *) &si_other, &slen);
-		mempcpy(& helper_ptr[i*PACK_SIZE], buf, PACK_SIZE);
-		//sendto(sockfd, & helper_ptr[i*PACK_SIZE], PACK_SIZE, 0, (struct sockaddr *) &si_other, slen);
+		mempcpy(& helper_ptr[sequence*PACK_SIZE], buf, PACK_SIZE);
+		printf("object seq: %d\n", sequence);
 		goto repeat;
 	    }
 	}
@@ -132,6 +135,7 @@ int main(int argc, char *argv[]){
 	netdisplay = (pthread_t*) malloc(sizeof(pthread_t) * threads_count);
 	
 	PORTS = (int*) malloc(sizeof(int)*threads_count);
+	frameupdate = (char*) malloc(sizeof(char)*threads_count);
 	
 	for (int i=0; i<threads_count; i++){
 		// init network stuff
@@ -140,6 +144,7 @@ int main(int argc, char *argv[]){
 		}
 	
 	while (1){
+		
 		}
 		
     return 0;
