@@ -68,6 +68,11 @@ struct dataset_object{
 	float freq[FREQ_BIN];
 } object[OBJECT_COUNT_MAX], *object_ptr;
 
+struct sending_buffer{
+	unsigned int sequence;
+	char data[PACK_SIZE];
+	} sendbuf;
+	
 char *helper_ptr;
 
 struct timespec start, stop, timestamp;
@@ -93,9 +98,9 @@ void* processDisplay(void *arg){
 	//imshow("Phase_img", Phaseimg_cpu1);
 	//imshow("Phase_diff_img", Phase_diff_img_cpu1);
 	
-	Color_map = convert_colormap(Color_map);
-	imshow("Frequency_Image", Color_map);
-	imshow("Input img", raw_frame); //color_frame);
+	//Color_map = convert_colormap(Color_map);
+	//imshow("Frequency_Image", Color_map);
+	//imshow("Input img", raw_frame); //color_frame);
 	
 	if (waitKey(1)==27) break;
 	}
@@ -153,14 +158,14 @@ void* processNetwork(void *arg){
 		netbuf[0] = 0; // 0 means image package
 		netbuf[1] = i; // sequence number of the package
 		// sequence
-		printf("image sequence: %d/%d %d\n", i, total_pack, sizeof(long int)*2);
+		//printf("image sequence: %d/%d %d\n", i, total_pack, sizeof(long int)*2);
 		sendto(sockfd, netbuf, sizeof(long int)*2, 0, (struct sockaddr *) &si_other, slen);
     	// cotent
 		printf("image content: %d/%d %d\n", i, total_pack, PACK_SIZE);
 		sendto(sockfd, & helper_ptr[i*PACK_SIZE], PACK_SIZE, 0, (struct sockaddr *) &si_other, slen);
         }
 	
-	object_count=2;
+	object_count=1;
 	total_pack = 1 + sizeof(struct dataset_object) / PACK_SIZE;
 	for (int num=0; num<object_count; num++){
 		object_ptr = &(object[num]);
@@ -170,7 +175,7 @@ void* processNetwork(void *arg){
 			netbuf[0] = num+1;
 			netbuf[1] = i;
 			// sequence
-			printf("object %d sequence: %d/%d %d\n", num, i, total_pack, sizeof(long int)*2);
+			//printf("object %d sequence: %d/%d %d\n", num, i, total_pack, sizeof(long int)*2);
 			sendto(sockfd, netbuf, sizeof(long int)*2, 0, (struct sockaddr *) &si_other, slen);
 			// cotent
     		printf("object %d content: %d/%d %d\n", num, i, total_pack, PACK_SIZE);

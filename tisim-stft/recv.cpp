@@ -1,5 +1,6 @@
 /*
-  ./recver PORTS..
+	g++ recv.cpp -lpthread `pkg-config opencv --libs` -o recvr
+	./recver PORTS..
  */
 
 #include <opencv2/opencv.hpp>
@@ -71,15 +72,21 @@ void* processNetworkisplay(void *arg){
     si_me.sin_addr.s_addr = htonl(INADDR_ANY);
     if (bind(s, (struct sockaddr *) &si_me, sizeof(si_me))==-1) perror("bind");
     
-    
     while (1){
 		repeat:
 		len = recvfrom(s, buf, BUF_LEN, 0, (struct sockaddr *) &si_other, &slen);
-		printf("from %s:%d len, %d byte %d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), len, sizeof(long int)*2);
+		//printf("from %s:%d len, %d byte %d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port), len, sizeof(long int)*2);
+		if (len!=16) printf("viola %d\n", len);
 		switch (len){
-			case (sizeof(long int)*3): goto timeheader; break;
-			case (sizeof(long int)*2): goto sequence; break;
-			default: goto repeat; break;
+			case (sizeof(long int)*3): 
+				goto timeheader; 
+				//printf("timeheader %d\n", len);
+			case (sizeof(long int)*2): 
+				//printf("sequence %d\n", len);
+				goto sequence; 
+			default: 
+				//printf("invalid length %d\n", len);
+				goto repeat;
 			}
 		
 		timeheader: // receiver timestamp
@@ -103,7 +110,7 @@ void* processNetworkisplay(void *arg){
 		imagepacket_ptr = &imagepacket;
 		helper_ptr= (char*) imagepacket_ptr;
 		len = recvfrom(s, buf, BUF_LEN, 0, (struct sockaddr *) &si_other, &slen);
-		mempcpy(& helper_ptr[sequence*PACK_SIZE], buf, PACK_SIZE);
+		//mempcpy(& helper_ptr[sequence*PACK_SIZE], buf, PACK_SIZE);
 		//printf("image seq: %d\n", sequence);
     	goto repeat;
 		
@@ -111,8 +118,8 @@ void* processNetworkisplay(void *arg){
 		object_ptr = &(object[num]);
 		helper_ptr= (char*) object_ptr;
 		len = recvfrom(s, buf, BUF_LEN, 0, (struct sockaddr *) &si_other, &slen);
-		mempcpy(& helper_ptr[sequence*PACK_SIZE], buf, PACK_SIZE);
-		printf("object seq: %d\n", sequence);
+		//mempcpy(& helper_ptr[sequence*PACK_SIZE], buf, PACK_SIZE);
+		//printf("object seq: %d\n", sequence);
 		goto repeat;
 	    }
 	}
