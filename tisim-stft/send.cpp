@@ -46,7 +46,7 @@ Mat	Color_map(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC3);
 Mat Phaseimg_cpu1, Phase_diff_img_cpu1;
 Mat peakfreq_temp;
 
-unsigned int object_count;
+unsigned int objects_count;
 
 /*
 ・Input image (VGA, JPEG compressed (unsigned char))
@@ -65,6 +65,7 @@ struct dataset_object{
 	unsigned char object_num; // 1 to 10
 	float centroid_x;
 	float centroid_y;
+	float blob_size;
 	float freq[FREQ_BIN];
 } object[OBJECT_COUNT_MAX], *object_ptr;
 
@@ -99,7 +100,7 @@ void* processDisplay(void *arg){
 	//imshow("Phase_img", Phaseimg_cpu1);
 	//imshow("Phase_diff_img", Phase_diff_img_cpu1);
 	
-	//Color_map = convert_colormap(Color_map);
+	Color_map = convert_colormap(Color_map);
 	//imshow("Frequency_Image", Color_map);
 	//imshow("Input img", raw_frame); //color_frame);
 	
@@ -131,10 +132,69 @@ void* processGPU(void *arg)
 ・frequency response (arrays of 32-bit float).  
 */
 
+void* cvblob(){
+	float moment_x[OBJECT_COUNT_MAX], moment_y[OBJECT_COUNT_MAX], mass[OBJECT_COUNT_MAX];
+	float moment_x_temp, moment_y_temp, mass_temp;
+	
+	SimpleBlobDetector::Params pDefaultBLOB;
+    // This is default parameters for SimpleBlobDetector
+    pDefaultBLOB.thresholdStep = 10;
+    pDefaultBLOB.minThreshold = 20;
+    pDefaultBLOB.maxThreshold = 220;
+    pDefaultBLOB.minRepeatability = 2;
+    pDefaultBLOB.minDistBetweenBlobs = 10;
+    pDefaultBLOB.filterByColor = false;
+    pDefaultBLOB.blobColor = 0;
+    pDefaultBLOB.filterByArea = false;
+    pDefaultBLOB.minArea = 25;
+    pDefaultBLOB.maxArea = 5000;
+    pDefaultBLOB.filterByCircularity = false;
+    pDefaultBLOB.minCircularity = 0.9f;
+    pDefaultBLOB.maxCircularity = (float)1e37;
+    pDefaultBLOB.filterByInertia = false;
+    pDefaultBLOB.minInertiaRatio = 0.1f;
+    pDefaultBLOB.maxInertiaRatio = (float)1e37;
+    pDefaultBLOB.filterByConvexity = false;
+    pDefaultBLOB.minConvexity = 0.95f;
+    pDefaultBLOB.maxConvexity = (float)1e37;
+	
+	// Detect blobs.
+	vector<KeyPoint> keypoints;
+	Ptr<SimpleBlobDetector> sbd = SimpleBlobDetector::create(pDefaultBLOB);
+	sbd->detect(Color_map, keypoints, Mat());
+    
+	objects_count=0; 
+	for (std::vector<KeyPoint>::iterator it = keypoints.begin(); it != keypoints.end(); ++it){
+		object[objects_count].centroid_x = it->pt.x;
+		object[objects_count].centroid_y = it->pt.y;
+		object[objects_count].blob_size = it->size;
+		//moment_x[n]= it->pt.x;
+		//moment_y[n]= it->pt.y;
+		//mass[n]= it->size;
+		objects_count++;
+		} 
+	
+	/* // little sorting
+	for (int i=n-1; i>=0; i--){
+		for (int j=i-1; j>=0; j--){
+			if (moment_x[i] > moment_x[j]){
+				moment_x_temp= moment_x[i];
+				moment_y_temp= moment_y[i];
+				mass_temp= mass[i];
+				moment_x[i]= moment_x[j];
+				moment_y[i]= moment_y[j];
+				mass[i]= mass[j];
+				moment_x[j]= moment_x_temp;
+				moment_y[j]= moment_y_temp;
+				mass[j]= mass_temp;
+				}
+			}
+		} */
+	}
 
 void* processNetwork(void *arg){
 	int total_pack;
-	int ga;
+	int sentlen;
 	
 	while(1){
 	
@@ -154,9 +214,7 @@ void* processNetwork(void *arg){
     netbuf[2] = timestamp.tv_nsec;    
     char mbuf[8];
     memcpy(mbuf, netbuf, 32);
-    ga= sendto(sockfd, mbuf, 32, 0, (struct sockaddr *) &si_other, slen);
-    //printf("%d: %lx -- %lx -- %lx\n",ga, netbuf[0], netbuf[1], netbuf[2]);
-	//printf("timestamp %lu:%lu, totalpack %d %d\n",timestamp.tv_sec, timestamp.tv_nsec, total_pack, ga);
+    sentlen= sendto(sockfd, mbuf, 32, 0, (struct sockaddr *) &si_other, slen);
     
     //sending content, image
     imagepacket_ptr = &imagepacket;
@@ -169,9 +227,8 @@ void* processNetwork(void *arg){
 		sendto(sockfd, &sendbuf, sizeof(struct sending_buffer), 0, (struct sockaddr *) &si_other, slen);
         }
 	
-	object_count=3;
 	total_pack = 1 + sizeof(struct dataset_object) / PACK_SIZE;
-	for (int num=0; num<object_count; num++){
+	for (int num=0; num<objects_count; num++){
 		object_ptr = &(object[num]);
 		helper_ptr= (char*) object_ptr;
 		//sending content, object
@@ -251,6 +308,7 @@ int main(int argc, char *argv[]){
 			
 			image_ = raw_frame.data;
 			Image_grab(image_) ;
+			cvblob();
         }
         else
         {
