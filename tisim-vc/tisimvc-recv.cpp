@@ -24,6 +24,10 @@ using namespace std;
 unsigned int object_count, threads_count;
 int PORTS[4]; // open ports for senders
 
+Mat image_input(480, 640, CV_8UC1);
+Mat image_freq(480, 640, CV_8UC3);
+
+
 struct dataset_image {
     unsigned char image_input[FRAME_SIZE];
     unsigned char image_peak[FRAME_SIZE * 3];
@@ -102,6 +106,11 @@ DWORD WINAPI processNetworkDisplay(void* param) {
         default:
             printf("invalid length %d\n", ByteReceived);
             break;
+        }
+    // sounds fair?
+        if (recv_buffer.sequence == 0) {
+            memcpy(image_input.data, imagepacket.image_input, FRAME_SIZE);
+            memcpy(image_freq.data, imagepacket.image_peak, FRAME_SIZE*3);
         }
     }
 
