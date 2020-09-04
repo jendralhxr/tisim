@@ -1,6 +1,6 @@
 /*
  * $ g++ susa.cpp  `pkg-config opencv --libs` -lspi_adc  -lpthread
- * $ sudo ./a.out /dev/video1 FRAMERATE EXPOSURE
+ * $ sudo ./a.out /dev/video1 FRAMERATE EXPOSURE MOTORGAIN
  * */
 
 #include <iostream>
@@ -21,7 +21,6 @@
 #include "spi_ad.h"
 #include "v4ldevice.cpp"
 
-
 using namespace cv;
 using namespace std;
 
@@ -39,6 +38,7 @@ int val_max_x, val_max_y;
 static	spi_setting		dac;
 static	spi_setting		adc;
 uint16_t	data;
+double voltage_incr;
 
 Mat raw_frame(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC1,Scalar(0));// Grayscale
 
@@ -102,6 +102,15 @@ int main(int argc, char *argv[]){
 	ret = spi_transfer_da(dac, CTRL_REG, CTRL_LOAD, 0, NULL);					// load
 	if(ret == RET_ERR)	return(2);
 	
+	voltage_incr= atof(argv[4]);
+	
+	// home
+	data = cal_digital_pm10(2.5, 0);
+	pos_volt[0]= 0;
+	pos_volt[1]= 0;
+	ret = spi_transfer_da(dac, DAC_REG, DAC_A, data, NULL);
+	ret = spi_transfer_da(dac, DAC_REG, DAC_B, data, NULL);
+	
 	// the threads
 	int thread_handler;
 	thread_handler = pthread_create(&image_show, NULL, &processDisplay, NULL);
@@ -109,6 +118,7 @@ int main(int argc, char *argv[]){
 	// the routine
 	unsigned int cycle=0;
 	clock_gettime(CLOCK_MONOTONIC, &start);
+	
 	while(1){
 		clock_gettime(CLOCK_MONOTONIC, &timestamp);
 		ImageBuffer = snapFrame();
@@ -128,8 +138,10 @@ int main(int argc, char *argv[]){
 					}
 				}
 				
-			pos_volt[0] = (double) val_max_x/FRAME_WIDTH * 20.0 - 10.0;
-			pos_volt[1] = (double) val_max_y/FRAME_HEIGHT * 20.0 - 10.0;
+			if (val_max_x > (FRAME_WIDTH >> 1) + 8) pos_volt[0] -= voltage_incr;
+			else if (val_max_x < (FRAME_WIDTH >> 1) - 8) pos_volt[0] += voltage_incr;
+			if (val_max_y > (FRAME_HEIGHT >> 1) + 8) pos_volt[1] -= voltage_incr;
+			else if (val_max_y < (FRAME_HEIGHT >> 1) - 8) pos_volt[1] += voltage_incr;
 			printf("target (%d, %d) as %.4fV %.4fV\n", val_max_x, val_max_y, pos_volt[0], pos_volt[1]);
 			
 			// fps counter
@@ -145,14 +157,14 @@ int main(int argc, char *argv[]){
 			data = cal_digital_pm10(2.5, pos_volt[0]);	
 			ret = spi_transfer_da(dac, DAC_REG, DAC_A, data, NULL);
 			if(ret == RET_ERR)	fprintf(stderr, "Error: set DAC_A to 0x%04X\n", data);
-			// fprintf(stdout, "DAC_A-Analog output: %gV (0x%04X)\n", 9.999999, data);
+			// fprintf(stdout, "DAC_A-Analog output: %gV (0x%04X)\n", pos_volt[0], data);
 
 			// AD5752: DAC B
 			data = cal_digital_pm10(2.5, pos_volt[1]);
 			ret = spi_transfer_da(dac, DAC_REG, DAC_B, data, NULL);
 			if(ret == RET_ERR)	fprintf(stderr, "Error: set DAC_B to 0x%04X\n", data);
-			// fprintf(stdout, "DAC_B-Analog output: %gV (0x%04X)\n", -10.0, data);
-
+			// fprintf(stdout, "DAC_B-Analog output: %gV (0x%04X)\n", pos_volt[1], data);
+	}
 	else{
 		printf("No image buffer retrieved.\n");
 		break;
