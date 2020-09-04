@@ -24,7 +24,11 @@
 using namespace cv;
 using namespace std;
 
-pthread_t image_show;
+pthread_t thread_image;
+pthread_t thread_fps;
+pthread_t thread_pantilt;
+pthread_t thread_centroid;
+
  
 typedef float TYPE;
 char command[256]; // for parameter setting from shell
@@ -39,10 +43,10 @@ static	spi_setting		dac;
 static	spi_setting		adc;
 uint16_t	data;
 double voltage_incr;
-
+unsigned int cycle=0;
+	
 Mat raw_frame(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC1,Scalar(0));// Grayscale
 
-struct timespec start, stop, timestamp;
  
 void* processDisplay(void *arg){
 	while (1){
@@ -50,7 +54,67 @@ void* processDisplay(void *arg){
 		waitKey(1);
 		}
 	}
- 
+
+void* processFPSCounter(void *arg){
+	struct timespec start, stop, timestamp;
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	
+	while(1){
+		clock_gettime(CLOCK_MONOTONIC, &timestamp);
+		if (timestamp.tv_sec-start.tv_sec > 2){
+			// performance hit from 360 to 240 with double framerate counter
+			//printf("fps: %f\n", cycle / (double) (timestamp.tv_sec-start.tv_sec + (timestamp.tv_nsec-start.tv_nsec)/1e9));
+			printf("fps: %d\n", cycle /2 );
+			clock_gettime(CLOCK_MONOTONIC, &start);
+			cycle= 0;
+			}
+		}
+	}
+	
+void* processPanTilt(void *arg){
+	// home
+	data = cal_digital_pm10(2.5, 0);
+	pos_volt[0]= 0;
+	pos_volt[1]= 0;
+	ret = spi_transfer_da(dac, DAC_REG, DAC_A, data, NULL);
+	ret = spi_transfer_da(dac, DAC_REG, DAC_B, data, NULL);
+	
+	while(1){
+		// AD5752: DAC A 
+		data = cal_digital_pm10(2.5, pos_volt[0]);	
+		ret = spi_transfer_da(dac, DAC_REG, DAC_A, data, NULL);
+		if(ret == RET_ERR)	fprintf(stderr, "Error: set DAC_A to 0x%04X\n", data);
+		// fprintf(stdout, "DAC_A-Analog output: %gV (0x%04X)\n", pos_volt[0], data);
+
+		// AD5752: DAC B
+		data = cal_digital_pm10(2.5, pos_volt[1]);
+		ret = spi_transfer_da(dac, DAC_REG, DAC_B, data, NULL);
+		if(ret == RET_ERR)	fprintf(stderr, "Error: set DAC_B to 0x%04X\n", data);
+		// fprintf(stdout, "DAC_B-Analog output: %gV (0x%04X)\n", pos_volt[1], data);
+		}
+	}	
+
+void* processCentroid(void *arg){
+	while(1){
+		// finding the brighest spot
+		val_max= 0;
+		for (int i=0; i<FRAME_SIZE; i++){
+			//printf("%d ",raw_frame.data[i]);
+			if ( raw_frame.data[i] > val_max){
+				val_max= raw_frame.data[i];
+				val_max_x= i % FRAME_WIDTH;
+				val_max_y= i / FRAME_WIDTH;
+				}
+			}
+				
+		if (val_max_x > (FRAME_WIDTH >> 1) + 8) pos_volt[0] -= voltage_incr;
+		else if (val_max_x < (FRAME_WIDTH >> 1) - 8) pos_volt[0] += voltage_incr;
+		if (val_max_y > (FRAME_HEIGHT >> 1) + 8) pos_volt[1] -= voltage_incr;
+		else if (val_max_y < (FRAME_HEIGHT >> 1) - 8) pos_volt[1] += voltage_incr;
+		//printf("target (%d, %d) as %.4fV %.4fV\n", val_max_x, val_max_y, pos_volt[0], pos_volt[1]);
+		}
+	}
+
 int set_props(char *device, int exposure){
 	sprintf(command, "v4l2-ctl -d %s -c exposure_auto=1", device);
 	system(command);
@@ -104,66 +168,19 @@ int main(int argc, char *argv[]){
 	
 	voltage_incr= atof(argv[4]);
 	
-	// home
-	data = cal_digital_pm10(2.5, 0);
-	pos_volt[0]= 0;
-	pos_volt[1]= 0;
-	ret = spi_transfer_da(dac, DAC_REG, DAC_A, data, NULL);
-	ret = spi_transfer_da(dac, DAC_REG, DAC_B, data, NULL);
-	
 	// the threads
-	int thread_handler;
-	thread_handler = pthread_create(&image_show, NULL, &processDisplay, NULL);
+	int thread_handler[4];
+	thread_handler[0] = pthread_create(&thread_image, NULL, &processDisplay, NULL);
+	thread_handler[1] = pthread_create(&thread_pantilt, NULL, &processPanTilt, NULL);
+	thread_handler[2] = pthread_create(&thread_fps, NULL, &processFPSCounter, NULL);
+	thread_handler[3] = pthread_create(&thread_centroid, NULL, &processCentroid, NULL);
 	
 	// the routine
-	unsigned int cycle=0;
-	clock_gettime(CLOCK_MONOTONIC, &start);
-	
 	while(1){
-		clock_gettime(CLOCK_MONOTONIC, &timestamp);
 		ImageBuffer = snapFrame();
-
 		if( ImageBuffer != NULL ){
 			memmove(raw_frame.data, ImageBuffer, sizeof(char)*FRAME_SIZE);
-			clock_gettime(CLOCK_MONOTONIC, &timestamp);
-			
-			// finding the brighest spot
-			val_max= 0;
-			for (int i=0; i<FRAME_SIZE; i++){
-				//printf("%d ",raw_frame.data[i]);
-				if ( raw_frame.data[i] > val_max){
-					val_max= raw_frame.data[i];
-					val_max_x= i % FRAME_WIDTH;
-					val_max_y= i / FRAME_WIDTH;
-					}
-				}
-				
-			if (val_max_x > (FRAME_WIDTH >> 1) + 8) pos_volt[0] -= voltage_incr;
-			else if (val_max_x < (FRAME_WIDTH >> 1) - 8) pos_volt[0] += voltage_incr;
-			if (val_max_y > (FRAME_HEIGHT >> 1) + 8) pos_volt[1] -= voltage_incr;
-			else if (val_max_y < (FRAME_HEIGHT >> 1) - 8) pos_volt[1] += voltage_incr;
-			printf("target (%d, %d) as %.4fV %.4fV\n", val_max_x, val_max_y, pos_volt[0], pos_volt[1]);
-			
-			// fps counter
-			cycle++;
-			if (timestamp.tv_sec-start.tv_sec > 2){
-				printf("fps: %f\n", cycle / (double) (timestamp.tv_sec-start.tv_sec + (timestamp.tv_nsec-start.tv_nsec)/1e9));
-				clock_gettime(CLOCK_MONOTONIC, &start);
-				cycle= 0;
-				}
-				
-			// silly thing I did
-			// AD5752: DAC A 
-			data = cal_digital_pm10(2.5, pos_volt[0]);	
-			ret = spi_transfer_da(dac, DAC_REG, DAC_A, data, NULL);
-			if(ret == RET_ERR)	fprintf(stderr, "Error: set DAC_A to 0x%04X\n", data);
-			// fprintf(stdout, "DAC_A-Analog output: %gV (0x%04X)\n", pos_volt[0], data);
-
-			// AD5752: DAC B
-			data = cal_digital_pm10(2.5, pos_volt[1]);
-			ret = spi_transfer_da(dac, DAC_REG, DAC_B, data, NULL);
-			if(ret == RET_ERR)	fprintf(stderr, "Error: set DAC_B to 0x%04X\n", data);
-			// fprintf(stdout, "DAC_B-Analog output: %gV (0x%04X)\n", pos_volt[1], data);
+			cycle++; // fps counter
 	}
 	else{
 		printf("No image buffer retrieved.\n");
