@@ -1,3 +1,8 @@
+/*
+ * $ g++ susa.cpp  `pkg-config opencv --libs` -lspi_adc  -lpthread
+ * $ sudo ./a.out /dev/video1 FRAMERATE EXPOSURE
+ * */
+
 #include <iostream>
 #include <math.h>
 #include <opencv2/highgui.hpp>
@@ -124,8 +129,8 @@ int main(int argc, char *argv[]){
 				}
 				
 			pos_volt[0] = (double) val_max_x/FRAME_WIDTH * 20.0 - 10.0;
-			pos_volt[1] = (double) val_max_y/FRAME_WIDTH * 20.0 - 10.0;
-			printf("target (%d, %d) as %fV %fV\n", val_max_x, val_max_y, pos_volt[0], pos_volt[1]);
+			pos_volt[1] = (double) val_max_y/FRAME_HEIGHT * 20.0 - 10.0;
+			printf("target (%d, %d) as %.4fV %.4fV\n", val_max_x, val_max_y, pos_volt[0], pos_volt[1]);
 			
 			// fps counter
 			cycle++;
@@ -140,12 +145,14 @@ int main(int argc, char *argv[]){
 			data = cal_digital_pm10(2.5, pos_volt[0]);	
 			ret = spi_transfer_da(dac, DAC_REG, DAC_A, data, NULL);
 			if(ret == RET_ERR)	fprintf(stderr, "Error: set DAC_A to 0x%04X\n", data);
-			
+			// fprintf(stdout, "DAC_A-Analog output: %gV (0x%04X)\n", 9.999999, data);
+
 			// AD5752: DAC B
 			data = cal_digital_pm10(2.5, pos_volt[1]);
 			ret = spi_transfer_da(dac, DAC_REG, DAC_B, data, NULL);
 			if(ret == RET_ERR)	fprintf(stderr, "Error: set DAC_B to 0x%04X\n", data);
-		}
+			// fprintf(stdout, "DAC_B-Analog output: %gV (0x%04X)\n", -10.0, data);
+
 	else{
 		printf("No image buffer retrieved.\n");
 		break;
