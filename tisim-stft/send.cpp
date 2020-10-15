@@ -298,7 +298,7 @@ int main(int argc, char *argv[]){
         if( ImageBuffer != NULL )
         {
             memmove(raw_frame.data, ImageBuffer, sizeof(char)*FRAME_SIZE);
-//			clock_gettime(CLOCK_MONOTONIC, &timestamp);
+			clock_gettime(CLOCK_MONOTONIC, &timestamp);
 			cycle++;
 			if (timestamp.tv_sec-start.tv_sec > 2){
 				printf("fps: %f\n", cycle / (double) (timestamp.tv_sec-start.tv_sec + (timestamp.tv_nsec-start.tv_nsec)/1e9));

@@ -206,7 +206,7 @@ int capture_image(int fd){
 	    
     //color
     memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
-    cvtColor(raw, image, CV_BayerBG2BGR);
+    cvtColor(raw, image, COLOR_BayerBG2BGR);
     imshow( "Display window", image );                   // Show our image inside it.
 	
     // grey
