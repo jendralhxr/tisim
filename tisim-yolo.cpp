@@ -3,7 +3,7 @@
  *   I just don't bother with licenses.
  *   
  *  compile against OpenCV
- *   $	g++ tisim-send.cpp -o tisim-send `pkg-config opencv --libs` 
+ *   $	g++ tisim-yolo.cpp PracticalSocket.cpp -o tisim-yolo `pkg-config opencv --libs` -ldarknet
  *   $	./tisim-yolo <camera-device> <receiver-host> <port>
  * 
  * adapted from:
