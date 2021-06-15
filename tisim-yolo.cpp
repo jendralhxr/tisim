@@ -75,8 +75,8 @@ std::vector<std::string> objects_names_from_file(std::string const filename) {
 
 //yolo
 std::string  names_file = "coco.names";
-std::string  cfg_file = "yolov3-tiny.cfg";
-std::string  weights_file = "yolov3-tiny.weights";
+std::string  cfg_file = "yolov4-tiny.cfg";
+std::string  weights_file = "yolov4-tiny.weights";
 vector <string> obj_names = objects_names_from_file(names_file); 
 Detector detector(cfg_file, weights_file);
 //float const thresh =  0.2;
@@ -409,8 +409,8 @@ int main(int argc, char **argv){
 		else {
 			std::vector<bbox_t> result_vec = detector.detect(image);
 			draw_boxes(image, result_vec, obj_names);
-			//show_console_result(result_vec, obj_names);
-			//cv::imshow("window name", image);
+			show_console_result(result_vec, obj_names);
+			cv::imshow("window name", image);
 			//cv::waitKey(20);
 			send_image();
 			}
