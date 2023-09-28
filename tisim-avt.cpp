@@ -96,10 +96,10 @@ int print_caps(int fd){
       
     struct v4l2_format fmt = {0};
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	fmt.fmt.pix.width = 640;
-	fmt.fmt.pix.height = 480;
-	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGGB; // color
-	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_GREY; // greyscale
+	fmt.fmt.pix.width = FRAME_WIDTH;
+	fmt.fmt.pix.height = FRAME_HEIGHT;
+	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_SRGGB8; // color
+	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_GREY; // greyscale
 
 	//fmt.fmt.pix.field = V4L2_FIELD_NONE;
 
@@ -205,13 +205,13 @@ int capture_image(int fd){
     //imshow( "Display window", image );                   // Show our image inside it.
 	    
     //color
-    //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
-    //cvtColor(raw, image, COLOR_BayerBG2BGR);
-    //imshow( "Display window", image );                   // Show our image inside it.
+    memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+    cvtColor(raw, image, COLOR_BayerBG2BGR);
+    imshow( "Display window", image );                   // Show our image inside it.
 	
     // grey
-    memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
-    imshow( "Display window", raw );                   
+    //memmove(raw.data, buffer, sizeof(char)*FRAME_SIZE);
+    //imshow( "Display window", raw );                   
 	
 	
     waitKey(1);                                          // Wait for a keystroke in the window
